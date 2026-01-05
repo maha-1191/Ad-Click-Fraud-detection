@@ -14,9 +14,13 @@ SECRET_KEY = os.environ.get(
     "unsafe-dev-key-for-final-year-project"
 )
 
-DEBUG = True  # Keep True for development / demo
+DEBUG = False  # Keep True foALLOr development / demo
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "0.0.0.0"]
+ALLOWED_HOSTS = [
+    "clickshield-fraud-ai.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # --------------------------------------------------
 # APPLICATION DEFINITION
