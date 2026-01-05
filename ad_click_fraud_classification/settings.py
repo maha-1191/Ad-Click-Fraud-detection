@@ -14,7 +14,8 @@ SECRET_KEY = os.environ.get(
     "unsafe-dev-key-for-final-year-project"
 )
 
-DEBUG = False  # Keep True foALLOr development / demo
+DEBUG = False  # Production (Render)
+
 
 ALLOWED_HOSTS = [
     "clickshield-fraud-ai.onrender.com",
