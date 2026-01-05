@@ -54,14 +54,16 @@ REM ===== Setup database =====
 python manage.py makemigrations
 python manage.py migrate
 
-REM ===== Create admin user =====
-python manage.py createsuperuser
-
 REM ===== Train fraud detection model =====
 python -m fraudapp.ml_engine.training.run_training
 
 REM ===== Start the project (no auto reload) =====
 python manage.py runserver --noreload
+
+Access the Application
+Application: http://127.0.0.1:8000/
+
+Admin Panel: http://127.0.0.1:8000/admin/
 
 
 
