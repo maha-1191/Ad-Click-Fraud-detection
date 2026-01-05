@@ -1,0 +1,215 @@
+/* ================= GLOBAL ================= */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: hsl(229, 16%, 80%); /* soft lavender-blue */
+    font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #111827;
+    margin: 0;
+}
+
+/* ================= LAYOUT ================= */
+.main-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.content {
+    flex: 1;
+    padding: 30px;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: #0f172a;
+    color: #e5e7eb;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar h5 {
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    padding: 20px;
+    margin: 0;
+}
+
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 15px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar a:hover {
+    background-color: #1e293b;
+    color: #ffffff;
+}
+
+.sidebar a.active {
+    background-color: #2563eb;
+    color: #ffffff;
+}
+
+.sidebar form {
+    margin-top: auto;
+    padding: 20px;
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+    background-color: #ffffff;
+    padding: 15px 25px;
+    border-bottom: 1px solid #dbe0ea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* ================= CARDS ================= */
+.card {
+    background-color: #ffffff;
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+.card h2,
+.card h3,
+.card h4,
+.card h5 {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* ================= METRIC CARDS ================= */
+.metric-card h2 {
+    font-size: 28px;
+    margin: 0;
+}
+
+.metric-card small {
+    color: #64748b;
+}
+
+/* ================= TABLES ================= */
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #f1f5f9;
+    border-bottom: none;
+    color: #334155;
+    font-weight: 600;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+/* ================= BUTTONS ================= */
+.btn-primary {
+    background: #2563eb;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-success {
+    background: #16a34a;
+    border: none;
+}
+
+.btn-success:hover {
+    background: #15803d;
+}
+
+.btn-outline-secondary {
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ================= LOGIN & REGISTER ================= */
+.login-page {
+    background: linear-gradient(135deg, #020617, #0f172a);
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    width: 400px;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 32px;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+}
+
+.auth-card h3 {
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+/* ================= UPLOAD ================= */
+.upload-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+}
+
+/* ================= CHART CONTAINERS ================= */
+canvas {
+    max-width: 100%;
+}
+
+/* ================= ALERTS ================= */
+.alert-success {
+    background-color: #dcfce7;
+    border: none;
+    color: #166534;
+}
+
+/* ================= UTILITIES ================= */
+.text-muted {
+    color: #64748b !important;
+}
+
+.text-danger {
+    color: #dc2626 !important;
+}
+
+.text-success {
+    color: #16a34a !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08) !important;
+}
+
+
+
+

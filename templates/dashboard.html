@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+{% if dataset %}
+<div class="alert alert-info mb-3">
+    Showing results for:
+    <strong>{{ dataset.original_filename }}</strong>
+</div>
+{% endif %}
+
+{# ================= EMPTY STATE (NO RESULT YET) ================= #}
+{% if not result %}
+<div class="card shadow-sm p-5 text-center mb-4">
+    <h4>Welcome 👋</h4>
+    <p class="text-muted mt-2">
+        Upload your first dataset to start fraud detection.
+    </p>
+    <a href="{% url 'upload' %}" class="btn btn-primary mt-3">
+        Upload Dataset
+    </a>
+</div>
+
+{% else %}
+
+{# ================= METRIC CARDS ================= #}
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3">
+            <h6 class="text-muted">Total Click Events</h6>
+            <h2>{{ result.total_clicks }}</h2>
+            <small class="text-muted">Raw uploaded click data</small>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3">
+            <h6 class="text-muted">Fraud Click Events</h6>
+            <h2 class="text-danger">{{ result.fraud_clicks }}</h2>
+            <small class="text-muted">Clicks involved in fraudulent behavior</small>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3">
+            <h6 class="text-muted">Legit Click Events</h6>
+            <h2 class="text-success">{{ result.legit_clicks }}</h2>
+            <small class="text-muted">Normal user interaction clicks</small>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm p-3">
+            <h6 class="text-muted">Fraud Ratio (Behavioral)</h6>
+            <h2>{{ result.metrics.summary.fraud_ratio|floatformat:4 }}</h2>
+            <small class="text-muted">Fraud clicks / Total clicks</small>
+        </div>
+    </div>
+
+</div>
+
+{# ================= PIE CHART ================= #}
+<div class="card shadow-sm p-4 mb-4">
+    <h5>Fraud vs Legit Click Distribution</h5>
+    <div style="height:300px;">
+        <canvas id="fraudChart"></canvas>
+    </div>
+</div>
+
+{# ================= HOURLY FRAUD CLICKS TREND ================= #}
+<div class="card shadow-sm p-4 mb-4">
+    <h5>⏱ Hourly Fraud Click Trends (24 Hours)</h5>
+
+    {% if result.metrics.time_trends %}
+        <div style="height:320px;">
+            <canvas id="timeTrendChart"></canvas>
+        </div>
+    {% else %}
+        <p class="text-muted mt-3">No temporal trend data available.</p>
+    {% endif %}
+</div>
+
+{# ================= SHAP EXPLAINABILITY ================= #}
+<div class="card shadow-sm p-4 mb-4">
+    <h5>Model Explainability – SHAP (Behavior-Level)</h5>
+
+    {% if result.metrics.shap_summary %}
+    <div class="table-responsive mt-3">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Behavioral Feature Group</th>
+                    <th>Mean |SHAP| Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in result.metrics.shap_summary %}
+                <tr>
+                    <td>{{ row.feature }}</td>
+                    <td>{{ row.mean_shap|floatformat:4 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p class="text-muted mt-2">
+            SHAP explanations are generated after inference completes.
+        </p>
+    {% endif %}
+</div>
+
+{# ================= BUSINESS ACTIONS (RESULTS SECTION) ================= #}
+<div class="card shadow-sm p-4 mb-4 text-center">
+    <h5 class="mb-2">🚨 Advertiser / Platform Actions</h5>
+
+    <p class="text-muted mb-4">
+        Deploy these blacklists at ad-network, firewall, or DSP level
+        to block high-risk traffic sources.
+    </p>
+
+    {% if result.dataset %}
+    <a href="{% url 'export_ip_blacklist' result.dataset.id %}"
+       class="btn btn-danger px-5 py-2">
+        ⬇ Export IP Blacklist (CSV)
+    </a>
+    {% endif %}
+</div>
+
+{# ================= SCRIPTS ================= #}
+<script src="{% static 'js/dashboard.js' %}"></script>
+
+<script>
+    renderFraudChart(
+        {{ result.fraud_clicks }},
+        {{ result.legit_clicks }}
+    );
+
+    const trends = {{ result.metrics.time_trends|safe }};
+    if (trends && trends.length > 0) {
+        const labels = trends.map(t => t.hour);
+        const fraudClicks = trends.map(t => t.fraud_clicks);
+        renderFraudClicksChart(labels, fraudClicks);
+    }
+</script>
+
+{% endif %}
+{% endblock %}
+
+
+
+
+
+              
+
+
+
+

@@ -1,0 +1,16 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Django DB
+db.sqlite3
+
+# ML artifacts (VERY IMPORTANT)
+fraudapp/ml_engine/artifacts/
+fraudapp/ml_engine/data_data/
+
+# Media uploads
+media/
