@@ -1,33 +1,33 @@
 from pathlib import Path
 import os
 
-# --------------------------------------------------
+# ==================================================
 # BASE DIRECTORY
-# --------------------------------------------------
+# ==================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# --------------------------------------------------
+
+# ==================================================
 # SECURITY
-# --------------------------------------------------
+# ==================================================
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "unsafe-dev-key-for-final-year-project"
 )
 
-DEBUG = True  # Production (Render)
-
+DEBUG = False  # MUST be False on Render
 
 ALLOWED_HOSTS = [
-    "clickshield-fraud-ai.onrender.com",
+    "ad-click-fraud-detection.onrender.com",
     ".onrender.com",
     "localhost",
     "127.0.0.1",
 ]
 
 
-# --------------------------------------------------
+# ==================================================
 # APPLICATION DEFINITION
-# --------------------------------------------------
+# ==================================================
 INSTALLED_APPS = [
     # Django default apps
     "django.contrib.admin",
@@ -37,15 +37,20 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Project apps
+    # Project app
     "fraudapp.apps.FraudappConfig",
 ]
 
-# --------------------------------------------------
+
+# ==================================================
 # MIDDLEWARE
-# --------------------------------------------------
+# ==================================================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+
+    # REQUIRED FOR CSS ON RENDER
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -54,14 +59,16 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-# --------------------------------------------------
+
+# ==================================================
 # URL CONFIGURATION
-# --------------------------------------------------
+# ==================================================
 ROOT_URLCONF = "ad_click_fraud_classification.urls"
 
-# --------------------------------------------------
+
+# ==================================================
 # TEMPLATES
-# --------------------------------------------------
+# ==================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -78,28 +85,31 @@ TEMPLATES = [
     },
 ]
 
-# --------------------------------------------------
+
+# ==================================================
 # WSGI / ASGI
-# --------------------------------------------------
+# ==================================================
 WSGI_APPLICATION = "ad_click_fraud_classification.wsgi.application"
 ASGI_APPLICATION = "ad_click_fraud_classification.asgi.application"
 
-# --------------------------------------------------
-# DATABASE (SQLite – FIXED FOR ML WORKLOAD)
-# --------------------------------------------------
+
+# ==================================================
+# DATABASE (SQLite – SAFE FOR FREE RENDER)
+# ==================================================
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
         "OPTIONS": {
-            "timeout": 30,  # Prevents "database is locked"
+            "timeout": 30,
         },
     }
 }
 
-# --------------------------------------------------
+
+# ==================================================
 # PASSWORD VALIDATION
-# --------------------------------------------------
+# ==================================================
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -115,41 +125,55 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# --------------------------------------------------
+
+# ==================================================
 # INTERNATIONALIZATION
-# --------------------------------------------------
+# ==================================================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
-# --------------------------------------------------
-# STATIC FILES
-# --------------------------------------------------
+
+# ==================================================
+# STATIC FILES (CSS / JS FIXED)
+# ==================================================
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
+
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# --------------------------------------------------
+STATICFILES_STORAGE = (
+    "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
+
+
+# ==================================================
 # MEDIA FILES (CSV UPLOADS)
-# --------------------------------------------------
+# ==================================================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# --------------------------------------------------
+
+# ==================================================
 # DEFAULT PRIMARY KEY
-# --------------------------------------------------
+# ==================================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# --------------------------------------------------
-# FILE UPLOAD LIMITS (IMPORTANT FOR CSV DATASETS)
-# --------------------------------------------------
+
+# ==================================================
+# FILE UPLOAD LIMITS
+# ==================================================
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 FILE_UPLOAD_PERMISSIONS = 0o644
 
-# --------------------------------------------------
-# AUTH SETTINGS (FIXED FLOW)
-# --------------------------------------------------
+
+# ==================================================
+# AUTH FLOW
+# ==================================================
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
