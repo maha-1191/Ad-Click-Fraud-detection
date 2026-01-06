@@ -150,9 +150,9 @@ def run_detection(request, dataset_id):
     try:
         with open(dataset.file.path, "rb") as f:
             response = requests.post(
-                STREAMLIT_API_URL,
-                files={"file": f},
-                timeout=180
+                "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app/?api=1",
+                files={"uploaded_file": f},
+                timeout=300
             )
 
         response.raise_for_status()
@@ -173,14 +173,15 @@ def run_detection(request, dataset_id):
         dataset.status = "PROCESSED"
         dataset.save()
 
-        messages.success(request, "Fraud detection completed.")
-        return redirect("dashboard")
+        messages.success(request, "Fraud detection completed successfully")
 
     except Exception as e:
         dataset.status = "FAILED"
         dataset.save()
-        messages.error(request, f"Fraud detection failed: {e}")
-        return redirect("dashboard")
+        messages.error(request, f"ML service error: {e}")
+
+    return redirect("dashboard")
+
 
 # =====================================================
 # EXPORT IP BLACKLIST
