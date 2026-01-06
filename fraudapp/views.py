@@ -1,5 +1,4 @@
 import csv
-import requests
 import pandas as pd
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -7,17 +6,11 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponse
+from django.http import HttpResponse
 from django.contrib.auth.models import User
 
 from .models import UploadedDataset, PredictionResult
 
-# =====================================================
-# STREAMLIT ML API URL
-# =====================================================
-STREAMLIT_API_URL = (
-    "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app"
-)
 
 # =====================================================
 # HOME
@@ -26,6 +19,7 @@ def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "home.html")
+
 
 # =====================================================
 # AUTH
@@ -77,6 +71,7 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
+
 # =====================================================
 # DASHBOARD
 # =====================================================
@@ -84,7 +79,7 @@ def logout_view(request):
 def dashboard(request):
     dataset = (
         UploadedDataset.objects
-        .filter(uploaded_by=request.user, status="PROCESSED")
+        .filter(uploaded_by=request.user)
         .order_by("-created_at")
         .first()
     )
@@ -101,6 +96,7 @@ def dashboard(request):
             "result": result,
         }
     )
+
 
 # =====================================================
 # UPLOAD DATASET
@@ -127,7 +123,11 @@ def upload_dataset(request):
             dataset.total_columns = len(df.columns)
             dataset.save()
 
-            messages.success(request, "Dataset uploaded successfully.")
+            messages.success(
+                request,
+                "Dataset uploaded. Open ML service to run detection."
+            )
+
             return render(request, "upload.html", {"dataset": dataset})
 
         except Exception:
@@ -136,8 +136,9 @@ def upload_dataset(request):
 
     return render(request, "upload.html")
 
+
 # =====================================================
-# RUN FRAUD DETECTION (API CALL)
+# RUN FRAUD DETECTION (NO API – REDIRECT ONLY)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -147,40 +148,18 @@ def run_detection(request, dataset_id):
         uploaded_by=request.user
     )
 
-    try:
-        with open(dataset.file.path, "rb") as f:
-            response = requests.post(
-                "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app/?api=1",
-                files={"uploaded_file": f},
-                timeout=300
-            )
+    dataset.status = "PROCESSED"
+    dataset.save()
 
-        response.raise_for_status()
-        output = response.json()
+    messages.info(
+        request,
+        "Fraud detection runs in the ML service. "
+        "Please upload the dataset there."
+    )
 
-        summary = output["summary"]
-
-        PredictionResult.objects.create(
-            dataset=dataset,
-            total_clicks=summary["total_clicks"],
-            fraud_clicks=summary["fraud_clicks"],
-            legit_clicks=summary["legit_clicks"],
-            metrics=output,
-            ip_risk=output["ip_risk"],
-            business_impact=output["business_impact"],
-        )
-
-        dataset.status = "PROCESSED"
-        dataset.save()
-
-        messages.success(request, "Fraud detection completed successfully")
-
-    except Exception as e:
-        dataset.status = "FAILED"
-        dataset.save()
-        messages.error(request, f"ML service error: {e}")
-
-    return redirect("dashboard")
+    return redirect(
+        "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app"
+    )
 
 
 # =====================================================
@@ -212,6 +191,7 @@ def export_ip_blacklist(request, dataset_id):
         ])
 
     return response
+
 
 
 
