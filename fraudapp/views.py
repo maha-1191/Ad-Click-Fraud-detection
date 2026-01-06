@@ -1,32 +1,23 @@
-import pandas as pd
 import csv
+import requests
+import pandas as pd
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 
-from fraudapp.ml_engine.inference.predictor import FraudPredictor
-from fraudapp.ml_engine.logger import get_logger
 from .models import UploadedDataset, PredictionResult
 
-logger = get_logger(__name__)
 
 # =====================================================
-# LAZY SINGLETON PREDICTOR
+# STREAMLIT ML SERVICE CONFIG
 # =====================================================
-_PREDICTOR = None
-
-def get_predictor():
-    global _PREDICTOR
-    if _PREDICTOR is None:
-        logger.debug("Using UPDATED FraudPredictor")
-        _PREDICTOR = FraudPredictor()
-    return _PREDICTOR
+STREAMLIT_API_URL = "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app"
 
 
 # =====================================================
@@ -89,7 +80,7 @@ def logout_view(request):
 
 
 # =====================================================
-# DASHBOARD (RESULTS INCLUDED)
+# DASHBOARD
 # =====================================================
 @login_required
 def dashboard(request):
@@ -114,9 +105,7 @@ def dashboard(request):
         )
 
     if dataset:
-        result = PredictionResult.objects.filter(
-            dataset=dataset
-        ).first()
+        result = PredictionResult.objects.filter(dataset=dataset).first()
 
     return render(
         request,
@@ -126,8 +115,6 @@ def dashboard(request):
             "result": result,
         }
     )
-
-   
 
 
 # =====================================================
@@ -187,7 +174,6 @@ def upload_dataset(request):
             return render(request, "upload.html", {"dataset": dataset})
 
         except Exception:
-            logger.exception("Upload failed")
             messages.error(request, "Upload failed.")
             return render(request, "upload.html")
 
@@ -195,7 +181,7 @@ def upload_dataset(request):
 
 
 # =====================================================
-# RUN FRAUD DETECTION (FINAL)
+# RUN FRAUD DETECTION (STREAMLIT API)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -206,26 +192,28 @@ def run_detection(request, dataset_id):
     )
 
     try:
-        df = pd.read_csv(dataset.file.path)
-        predictor = get_predictor()
-        output = predictor.predict(df)
+        with open(dataset.file.path, "rb") as f:
+            response = requests.post(
+                STREAMLIT_API_URL,
+                files={"file": f},
+                timeout=180
+            )
 
+        response.raise_for_status()
+        output = response.json()["data"]
         summary = output["summary"]
 
         PredictionResult.objects.create(
             dataset=dataset,
-
             total_clicks=summary["total_clicks"],
             fraud_clicks=summary["fraud_clicks"],
             legit_clicks=summary["legit_clicks"],
-
             metrics={
                 "summary": summary,
                 "business_impact": output.get("business_impact", {}),
                 "time_trends": output.get("time_trends", []),
                 "shap_summary": output.get("shap_summary", []),
             },
-
             ip_risk=output.get("ip_risk", []),
         )
 
@@ -233,14 +221,18 @@ def run_detection(request, dataset_id):
         dataset.save()
 
         messages.success(request, "Fraud detection completed.")
-        return redirect("dashboard")   # ✅ FIXED
-
-    except Exception:
-        logger.exception("Fraud detection failed")
-        dataset.status = "FAILED"
-        dataset.save()
-        messages.error(request, "Fraud detection failed.")
         return redirect("dashboard")
+
+    except requests.exceptions.Timeout:
+        messages.error(request, "ML service timeout.")
+    except requests.exceptions.RequestException:
+        messages.error(request, "ML service unavailable.")
+    except Exception:
+        messages.error(request, "Fraud detection failed.")
+
+    dataset.status = "FAILED"
+    dataset.save()
+    return redirect("dashboard")
 
 
 # =====================================================
@@ -275,22 +267,31 @@ def export_ip_blacklist(request, dataset_id):
 
 
 # =====================================================
-# API
+# OPTIONAL API ENDPOINT
 # =====================================================
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_predict_fraud(request):
     try:
-        df = pd.read_csv(request.FILES["file"])
-        predictor = get_predictor()
-        output = predictor.predict(df)
-        return JsonResponse({"status": "success", "data": output})
+        uploaded = request.FILES["file"]
+        response = requests.post(
+            STREAMLIT_API_URL,
+            files={"file": uploaded},
+            timeout=180
+        )
+
+        response.raise_for_status()
+        return JsonResponse(
+            {"status": "success", "data": response.json()["data"]}
+        )
+
     except Exception as e:
-        logger.exception("API inference failed")
         return JsonResponse(
             {"status": "error", "message": str(e)},
             status=500
         )
+
+
 
 
 

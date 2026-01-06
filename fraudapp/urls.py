@@ -3,20 +3,20 @@ from . import views
 
 urlpatterns = [
 
-    # ================= LANDING =================
+    # Landing
     path("", views.home, name="home"),
 
-    # ================= AUTH =================
+    # Auth
     path("login/", views.login_view, name="login"),
     path("register/", views.register_view, name="register"),
     path("logout/", views.logout_view, name="logout"),
 
-    # ================= UI ==================
+    # UI
     path("dashboard/", views.dashboard, name="dashboard"),
     path("upload/", views.upload_dataset, name="upload"),
     path("profile/", views.profile_view, name="profile"),
 
-    # ================= ML ==================
+    # ML
     path(
         "run-detection/<int:dataset_id>/",
         views.run_detection,
@@ -29,13 +29,14 @@ urlpatterns = [
         name="export_ip_blacklist"
     ),
 
-    # ================= API =================
+    # API
     path(
         "api/predict/",
         views.api_predict_fraud,
         name="api_predict"
     ),
 ]
+
 
 
 
