@@ -1,22 +1,22 @@
 import streamlit as st
 import pandas as pd
+import json
 
-# IMPORTANT: inference only (no training, no Django)
 from ml_engine.inference.predictor import FraudPredictor
 
 # -------------------------------------------------
-# Streamlit Page Configuration
+# CONFIG
 # -------------------------------------------------
 st.set_page_config(
-    page_title="Ad Click Fraud Detection - ML Service",
+    page_title="Ad Click Fraud Detection – ML API",
     layout="centered"
 )
 
 st.title("🚨 Ad Click Fraud Detection – ML Service")
-st.caption("Inference-only service using pre-trained CNN–RNN + XGBoost models")
+st.caption("Inference-only CNN–RNN + XGBoost service")
 
 # -------------------------------------------------
-# Load model ONCE (critical for free tier)
+# LOAD MODEL ONCE (CRITICAL)
 # -------------------------------------------------
 @st.cache_resource
 def load_predictor():
@@ -25,61 +25,30 @@ def load_predictor():
 predictor = load_predictor()
 
 # -------------------------------------------------
-# CSV Upload
+# API MODE (Django will POST file here)
 # -------------------------------------------------
 uploaded_file = st.file_uploader(
-    "Upload clickstream CSV file",
+    "Upload CSV (API or UI)",
     type=["csv"]
 )
 
 if uploaded_file is not None:
     try:
-        # Read CSV
         df = pd.read_csv(uploaded_file)
 
         st.success(
-            f"CSV loaded successfully | Rows: {df.shape[0]} | Columns: {df.shape[1]}"
+            f"CSV Loaded | Rows: {df.shape[0]} | Columns: {df.shape[1]}"
         )
 
-        st.subheader("📄 Data Preview")
-        st.dataframe(df.head())
-
-        # -------------------------------------------------
-        # Run inference
-        # -------------------------------------------------
         if st.button("Run Fraud Detection"):
-            with st.spinner("Running fraud detection..."):
-                results = predictor.predict(df)
+            with st.spinner("Running inference..."):
+                result = predictor.predict(df)
 
-            st.success("Fraud detection completed")
+            st.success("Inference completed")
 
-            # ==============================
-            # DISPLAY RESULTS
-            # ==============================
-
-            # ---- Summary ----
-            st.subheader("📊 Summary")
-            st.json(results["summary"])
-
-            # ---- High Risk IPs ----
-            st.subheader("🚨 High-Risk IPs")
-            if results["ip_risk"]:
-                st.dataframe(pd.DataFrame(results["ip_risk"]))
-            else:
-                st.info("No high-risk IPs detected")
-
-            # ---- Hourly Fraud Trends ----
-            st.subheader("⏰ Hourly Fraud Trends")
-            st.dataframe(pd.DataFrame(results["time_trends"]))
-
-            # ---- Business Impact ----
-            st.subheader("💰 Business Impact")
-            st.json(results["business_impact"])
-
-            # ---- SHAP Explainability ----
-            st.subheader("🔍 SHAP Explainability (Top Factors)")
-            st.dataframe(pd.DataFrame(results["shap_summary"]))
+            # IMPORTANT: JSON OUTPUT (API)
+            st.json(result)
 
     except Exception as e:
-        st.error("❌ Error during fraud detection")
+        st.error("Inference failed")
         st.exception(e)
