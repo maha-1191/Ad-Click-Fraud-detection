@@ -1,0 +1,112 @@
+--- Database Inspection: db.sqlite3 ---
+
+Table: django_migrations
+  Total Rows: 19
+  Columns: ['id', 'app', 'name', 'applied']
+  Sample Data:
+    (1, 'contenttypes', '0001_initial', '2026-01-04 18:52:34.069921')
+    (2, 'auth', '0001_initial', '2026-01-04 18:52:34.095015')
+    (3, 'admin', '0001_initial', '2026-01-04 18:52:34.103590')
+    (4, 'admin', '0002_logentry_remove_auto_add', '2026-01-04 18:52:34.119990')
+    (5, 'admin', '0003_logentry_add_action_flag_choices', '2026-01-04 18:52:34.121583')
+------------------------------
+
+Table: sqlite_sequence
+  Total Rows: 8
+  Columns: ['name', 'seq']
+  Sample Data:
+    ('django_migrations', 19)
+    ('django_admin_log', 0)
+    ('django_content_type', 8)
+    ('auth_permission', 32)
+    ('auth_group', 0)
+------------------------------
+
+Table: auth_group_permissions
+  Total Rows: 0
+  Columns: ['id', 'group_id', 'permission_id']
+  (Table is empty)
+------------------------------
+
+Table: auth_user_groups
+  Total Rows: 0
+  Columns: ['id', 'user_id', 'group_id']
+  (Table is empty)
+------------------------------
+
+Table: auth_user_user_permissions
+  Total Rows: 0
+  Columns: ['id', 'user_id', 'permission_id']
+  (Table is empty)
+------------------------------
+
+Table: django_admin_log
+  Total Rows: 0
+  Columns: ['id', 'object_id', 'object_repr', 'action_flag', 'change_message', 'content_type_id', 'user_id', 'action_time']
+  (Table is empty)
+------------------------------
+
+Table: django_content_type
+  Total Rows: 8
+  Columns: ['id', 'app_label', 'model']
+  Sample Data:
+    (1, 'admin', 'logentry')
+    (2, 'auth', 'permission')
+    (3, 'auth', 'group')
+    (4, 'auth', 'user')
+    (5, 'contenttypes', 'contenttype')
+------------------------------
+
+Table: auth_permission
+  Total Rows: 32
+  Columns: ['id', 'content_type_id', 'codename', 'name']
+  Sample Data:
+    (1, 1, 'add_logentry', 'Can add log entry')
+    (2, 1, 'change_logentry', 'Can change log entry')
+    (3, 1, 'delete_logentry', 'Can delete log entry')
+    (4, 1, 'view_logentry', 'Can view log entry')
+    (5, 2, 'add_permission', 'Can add permission')
+------------------------------
+
+Table: auth_group
+  Total Rows: 0
+  Columns: ['id', 'name']
+  (Table is empty)
+------------------------------
+
+Table: auth_user
+  Total Rows: 1
+  Columns: ['id', 'password', 'last_login', 'is_superuser', 'username', 'last_name', 'email', 'is_staff', 'is_active', 'date_joined', 'first_name']
+  Sample Data:
+    (1, 'pbkdf2_sha256$1000000$KOpmufN8wIOgWl5rnGp3tX$C1WixUqRHQYpFoBoYR4u+EdEpVgnE0oReW7cGfDsy2Q=', '2026-01-06 05:06:42.537392', 0, 'maha_bml', '', 'mahabml111@gmail.com', 0, 1, '2026-01-04 18:53:34.264408', '')
+------------------------------
+
+Table: fraudapp_uploadeddataset
+  Total Rows: 13
+  Columns: ['id', 'original_filename', 'file', 'status', 'total_rows', 'total_columns', 'created_at', 'uploaded_by_id']
+  Sample Data:
+    (1, 'test.csv', 'uploads/test.csv', 'PROCESSED', 300000, 7, '2026-01-04 18:54:07.416827', 1)
+    (2, 'test1.csv', 'uploads/test1.csv', 'PROCESSED', 200000, 7, '2026-01-04 18:59:32.798163', 1)
+    (3, 'test1.csv', 'uploads/test1_DqcZ3w0.csv', 'PROCESSED', 200000, 7, '2026-01-04 19:03:01.381100', 1)
+    (4, 'test1.csv', 'uploads/test1_hmNeWVe.csv', 'PROCESSED', 200000, 7, '2026-01-04 19:04:48.747893', 1)
+    (5, 'test1.csv', 'uploads/test1_IAacPFu.csv', 'PROCESSED', 200000, 7, '2026-01-04 19:08:46.815310', 1)
+------------------------------
+
+Table: fraudapp_predictionresult
+  Total Rows: 13
+  Columns: ['id', 'total_clicks', 'fraud_clicks', 'legit_clicks', 'metrics', 'ip_risk', 'asn_risk', 'business_impact', 'created_at', 'dataset_id']
+  Sample Data:
+    (1, 300000, 0, 300000, '{"summary": {"total_clicks": 300000, "fraud_clicks": 0, "legit_clicks": 300000, "total_sequences": 111509, "fraud_sequences": 0, "fraud_ratio": 0.0, "inference_threshold": 0.1}, "business_impact": {"assumed_cpc_inr": 5.0, "estimated_fraud_waste_inr": 0.0}, "time_trends": [{"hour": 0, "total_clicks": 7155, "fraud_clicks": 0}, {"hour": 1, "total_clicks": 6149, "fraud_clicks": 0}, {"hour": 2, "total_clicks": 5211, "fraud_clicks": 0}, {"hour": 3, "total_clicks": 10446, "fraud_clicks": 0}, {"hour": 4, "total_clicks": 6470, "fraud_clicks": 0}, {"hour": 5, "total_clicks": 10875, "fraud_clicks": 0}, {"hour": 6, "total_clicks": 18593, "fraud_clicks": 0}, {"hour": 7, "total_clicks": 29066, "fraud_clicks": 0}, {"hour": 8, "total_clicks": 18452, "fraud_clicks": 0}, {"hour": 9, "total_clicks": 52557, "fraud_clicks": 0}, {"hour": 10, "total_clicks": 14711, "fraud_clicks": 0}, {"hour": 11, "total_clicks": 69188, "fraud_clicks": 0}, {"hour": 12, "total_clicks": 75207, "fraud_clicks": 0}, {"hour": 13, "total_clicks": 83798, "fraud_clicks": 0}, {"hour": 14, "total_clicks": 79763, "fraud_clicks": 0}, {"hour": 15, "total_clicks": 82046, "fraud_clicks": 0}, {"hour": 16, "total_clicks": 68017, "fraud_clicks": 0}, {"hour": 17, "total_clicks": 37238, "fraud_clicks": 0}, {"hour": 18, "total_clicks": 53760, "fraud_clicks": 0}, {"hour": 19, "total_clicks": 45033, "fraud_clicks": 0}, {"hour": 20, "total_clicks": 37078, "fraud_clicks": 0}, {"hour": 21, "total_clicks": 29486, "fraud_clicks": 0}, {"hour": 22, "total_clicks": 16571, "fraud_clicks": 0}, {"hour": 23, "total_clicks": 50823, "fraud_clicks": 0}], "shap_summary": [{"feature": "Temporal & Session-Based Patterns", "mean_shap": 1.9136}, {"feature": "Device / OS Interaction Patterns", "mean_shap": 0.705}, {"feature": "IP-Centric Repetitive Behavior", "mean_shap": 0.3733}, {"feature": "App\\u2013Channel Usage Anomalies", "mean_shap": 0.176}, {"feature": "Click Frequency & Burst Behavior", "mean_shap": 0.1576}]}', '[]', '[]', '{}', '2026-01-04 18:56:19.201988', 1)
+    (2, 200000, 199781, 219, '{"summary": {"total_clicks": 200000, "fraud_clicks": 199781, "legit_clicks": 219, "total_sequences": 199810, "fraud_sequences": 199544, "fraud_ratio": 0.9989, "inference_threshold": 0.06}, "business_impact": {"assumed_cpc_inr": 5.0, "estimated_fraud_waste_inr": 998905.0}, "time_trends": [{"hour": 0, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 1, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 2, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 3, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 4, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 5, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 6, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 7, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 8, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 9, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 10, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 11, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 12, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 13, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 14, "total_clicks": 828, "fraud_clicks": 805}, {"hour": 15, "total_clicks": 9078, "fraud_clicks": 7908}, {"hour": 16, "total_clicks": 3189000, "fraud_clicks": 3185699}, {"hour": 17, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 18, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 19, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 20, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 21, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 22, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 23, "total_clicks": 0, "fraud_clicks": 0}], "shap_summary": [{"feature": "Temporal & Session-Based Patterns", "mean_shap": 2.1863}, {"feature": "IP-Centric Repetitive Behavior", "mean_shap": 0.9096}, {"feature": "Device / OS Interaction Patterns", "mean_shap": 0.4009}, {"feature": "App\\u2013Channel Usage Anomalies", "mean_shap": 0.2375}]}', '[{"ip": "0", "avg_risk_score": 1.051, "fraud_clicks": 199781, "risk_level": "HIGH", "recommended_action": "BLOCK"}]', '[]', '{}', '2026-01-04 19:01:37.514347', 2)
+    (3, 200000, 0, 200000, '{"summary": {"total_clicks": 200000, "fraud_clicks": 0, "legit_clicks": 200000, "total_sequences": 199810, "fraud_sequences": 0, "fraud_ratio": 0.0, "inference_threshold": 0.3}, "business_impact": {"assumed_cpc_inr": 5.0, "estimated_fraud_waste_inr": 0.0}, "time_trends": [{"hour": 0, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 1, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 2, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 3, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 4, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 5, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 6, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 7, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 8, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 9, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 10, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 11, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 12, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 13, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 14, "total_clicks": 828, "fraud_clicks": 0}, {"hour": 15, "total_clicks": 9078, "fraud_clicks": 0}, {"hour": 16, "total_clicks": 3189000, "fraud_clicks": 0}, {"hour": 17, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 18, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 19, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 20, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 21, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 22, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 23, "total_clicks": 0, "fraud_clicks": 0}], "shap_summary": [{"feature": "Temporal & Session-Based Patterns", "mean_shap": 2.1863}, {"feature": "IP-Centric Repetitive Behavior", "mean_shap": 0.9096}, {"feature": "Device / OS Interaction Patterns", "mean_shap": 0.4009}, {"feature": "App\\u2013Channel Usage Anomalies", "mean_shap": 0.2375}]}', '[]', '[]', '{}', '2026-01-04 19:04:14.609221', 3)
+    (4, 200000, 320, 199680, '{"summary": {"total_clicks": 200000, "fraud_clicks": 320, "legit_clicks": 199680, "total_sequences": 199810, "fraud_sequences": 32, "fraud_ratio": 0.0016, "inference_threshold": 0.2}, "business_impact": {"assumed_cpc_inr": 5.0, "estimated_fraud_waste_inr": 1600.0}, "time_trends": [{"hour": 0, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 1, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 2, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 3, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 4, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 5, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 6, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 7, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 8, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 9, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 10, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 11, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 12, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 13, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 14, "total_clicks": 828, "fraud_clicks": 0}, {"hour": 15, "total_clicks": 9078, "fraud_clicks": 0}, {"hour": 16, "total_clicks": 3189000, "fraud_clicks": 512}, {"hour": 17, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 18, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 19, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 20, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 21, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 22, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 23, "total_clicks": 0, "fraud_clicks": 0}], "shap_summary": [{"feature": "Temporal & Session-Based Patterns", "mean_shap": 2.1863}, {"feature": "IP-Centric Repetitive Behavior", "mean_shap": 0.9096}, {"feature": "Device / OS Interaction Patterns", "mean_shap": 0.4009}, {"feature": "App\\u2013Channel Usage Anomalies", "mean_shap": 0.2375}]}', '[{"ip": "0", "avg_risk_score": 0.207, "fraud_clicks": 320, "risk_level": "HIGH", "recommended_action": "BLOCK"}]', '[]', '{}', '2026-01-04 19:07:55.434790', 4)
+    (5, 200000, 48084, 151916, '{"summary": {"total_clicks": 200000, "fraud_clicks": 48084, "legit_clicks": 151916, "total_sequences": 199810, "fraud_sequences": 6090, "fraud_ratio": 0.2404, "inference_threshold": 0.15}, "business_impact": {"assumed_cpc_inr": 5.0, "estimated_fraud_waste_inr": 240420.0}, "time_trends": [{"hour": 0, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 1, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 2, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 3, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 4, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 5, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 6, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 7, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 8, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 9, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 10, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 11, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 12, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 13, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 14, "total_clicks": 828, "fraud_clicks": 0}, {"hour": 15, "total_clicks": 9078, "fraud_clicks": 16}, {"hour": 16, "total_clicks": 3189000, "fraud_clicks": 97427}, {"hour": 17, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 18, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 19, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 20, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 21, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 22, "total_clicks": 0, "fraud_clicks": 0}, {"hour": 23, "total_clicks": 0, "fraud_clicks": 0}], "shap_summary": [{"feature": "Temporal & Session-Based Patterns", "mean_shap": 2.1863}, {"feature": "IP-Centric Repetitive Behavior", "mean_shap": 0.9096}, {"feature": "Device / OS Interaction Patterns", "mean_shap": 0.4009}, {"feature": "App\\u2013Channel Usage Anomalies", "mean_shap": 0.2375}]}', '[{"ip": "0", "avg_risk_score": 0.203, "fraud_clicks": 48084, "risk_level": "HIGH", "recommended_action": "BLOCK"}]', '[]', '{}', '2026-01-04 19:11:54.027647', 5)
+------------------------------
+
+Table: django_session
+  Total Rows: 1
+  Columns: ['session_key', 'session_data', 'expire_date']
+  Sample Data:
+    ('oqj0n43w82eozgl8dbhg1lxzvyu8ccbp', '.eJxVjMEOwiAQBf-FsyHAQgGP3vsNZGGpVA0kpT0Z_9026UGvM_PemwXc1hK2npcwE7syyS6_LGJ65noIemC9N55aXZc58iPhp-18bJRft7P9OyjYy76eTPSIRgNIJzAqJyBOTpOFhAkUaOEHo3LciUsJSCtPVg2ZyEqwyrLPF9lcN20:1vczHG:b1Myu1hUEGBniEWtw6RCtwX9wqTV_hdqo8M3CsvioZM', '2026-01-20 05:06:42.544489')
+------------------------------
+

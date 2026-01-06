@@ -1,4 +1,3 @@
-
 from typing import Dict, Any
 from collections import defaultdict
 
@@ -10,13 +9,14 @@ import socket
 import struct
 
 from fraudapp.ml_engine.logger import get_logger
-from fraudapp.ml_engine.training.training_config import TrainingConfig
-from fraudapp.ml_engine.training.model_registry import ModelRegistry
 from fraudapp.ml_engine.data_pipeline.data_validation import DataValidator
 from fraudapp.ml_engine.data_pipeline.preprocessing import preprocess_data
 from fraudapp.ml_engine.data_pipeline.features import build_features
 from fraudapp.ml_engine.data_pipeline.sequence_builder import build_sequences
 from fraudapp.ml_engine.explainability.shap_explainer import SHAPExplainer
+
+from fraudapp.ml_engine.inference.inference_config import InferenceConfig
+from fraudapp.ml_engine.inference.inference_model_registry import InferenceModelRegistry
 
 logger = get_logger(__name__)
 
@@ -32,7 +32,7 @@ MEDIUM_RISK_THRESHOLD = 0.05
 
 class FraudPredictor:
     """
-    SEQUENCE-LEVEL FRAUD DETECTION ENGINE
+    INFERENCE-ONLY FRAUD DETECTION ENGINE
 
     CSV
       → Preprocess
@@ -40,41 +40,34 @@ class FraudPredictor:
       → IP-based Sequence Builder
       → CNN–RNN (sequence embeddings)
       → XGBoost (fraud probability)
-      → Click-level aggregation for dashboard
-      → SHAP explainability
+      → Click-level aggregation
+      → Limited SHAP explainability
     """
 
     def __init__(self):
-        self.config = TrainingConfig()
+        self.config = InferenceConfig()
         self.deep_model = None
 
+        # ---- sanity check ----
         assert (self.config.MODEL_DIR / "deep_model.pt").exists()
         assert (self.config.MODEL_DIR / "threshold.joblib").exists()
 
-        logger.debug("Loading trained XGBoost model")
-        self.xgb_model = ModelRegistry.build_xgb(self.config)
-        self.xgb_model.load(self.config.MODEL_DIR)
+        logger.info("Loading trained XGBoost model (inference)")
+        self.xgb_model = InferenceModelRegistry.load_xgb(
+            self.config.MODEL_DIR
+        )
 
         self.trained_threshold = joblib.load(
             self.config.MODEL_DIR / "threshold.joblib"
         )
 
-        # thresholds loaded silently
-
-
     # --------------------------------------------------
     def _load_deep_model(self, input_dim: int):
-        logger.debug("Loading CNN–RNN model")
-        self.deep_model = ModelRegistry.build_deep_model(
-            self.config, input_dim
+        logger.info("Loading CNN–RNN model (inference)")
+        self.deep_model = InferenceModelRegistry.load_deep(
+            self.config.MODEL_DIR,
+            input_dim
         )
-        self.deep_model.load_state_dict(
-            torch.load(
-                self.config.MODEL_DIR / "deep_model.pt",
-                map_location="cpu"
-            )
-        )
-        self.deep_model.eval()
 
     # --------------------------------------------------
     @staticmethod
@@ -145,8 +138,6 @@ class FraudPredictor:
 
         # ======================================================
         # CLICK-LEVEL FRAUD DERIVATION
-        # Sequence-level predictions are mapped to
-        # all constituent clicks for dashboard interpretation
         # ======================================================
         fraud_click_ids = set()
 
@@ -204,24 +195,16 @@ class FraudPredictor:
         ip_risk.sort(key=lambda x: x["avg_risk_score"], reverse=True)
 
         # ======================================================
-        # CORRECT HOURLY FRAUD CLICK TRENDS (CLICK-LEVEL)
+        # HOURLY FRAUD TRENDS (CLICK-LEVEL)
         # ======================================================
         time_stats = {
             hour: {"total_clicks": 0, "fraud_clicks": 0}
             for hour in range(24)
         }
 
-        # Mark fraud clicks once
-        fraud_click_ids = set()
-        for prob, click_ids in zip(probs, click_index_map):
-            if prob >= INFERENCE_BLOCK_THRESHOLD:
-                fraud_click_ids.update(click_ids)
-
-        # Aggregate per click (NOT per sequence)
         for idx, row in df.iterrows():
             hour = int(row["click_hour"])
             time_stats[hour]["total_clicks"] += 1
-
             if idx in fraud_click_ids:
                 time_stats[hour]["fraud_clicks"] += 1
 
@@ -232,17 +215,19 @@ class FraudPredictor:
                 "fraud_clicks": time_stats[hour]["fraud_clicks"],
             }
             for hour in range(24)
-            ]
-
-           
+        ]
 
         # ======================================================
-        # SHAP EXPLAINABILITY
+        # SHAP (LIMITED – SAFE FOR STREAMLIT FREE)
         # ======================================================
+        sample_size = min(50, embeddings.shape[0])
         shap_summary = SHAPExplainer(
             self.xgb_model.model
-        ).explain(embeddings)
+        ).explain(embeddings[:sample_size])
 
+        # ======================================================
+        # OUTPUT
+        # ======================================================
         return {
             "summary": {
                 "total_clicks": total_clicks,
@@ -265,6 +250,7 @@ class FraudPredictor:
             },
             "shap_summary": shap_summary,
         }
+
 
 
 

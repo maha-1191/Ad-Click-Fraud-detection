@@ -4,11 +4,13 @@
 }
 
 body {
-    background-color: hsl(229, 16%, 80%); /* soft lavender-blue */
+    background-color: #f8fafc;   /* clean neutral dashboard grey */
     font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     color: #111827;
     margin: 0;
 }
+
+
 
 /* ================= LAYOUT ================= */
 .main-wrapper {

@@ -8,9 +8,14 @@ __pycache__/
 # Django DB
 db.sqlite3
 
-# ML artifacts (VERY IMPORTANT)
-fraudapp/ml_engine/artifacts/
+# Training data ONLY
 fraudapp/ml_engine/data_data/
 
 # Media uploads
 media/
+
+# Environment variables
+.env
+
+# Logs
+*.log
