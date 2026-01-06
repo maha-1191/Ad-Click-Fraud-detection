@@ -7,27 +7,25 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.models import User
 
 from .models import UploadedDataset, PredictionResult
 
+# =====================================================
+# STREAMLIT ML API URL
+# =====================================================
+STREAMLIT_API_URL = (
+    "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app"
+)
 
 # =====================================================
-# STREAMLIT ML SERVICE CONFIG
-# =====================================================
-STREAMLIT_API_URL = "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app"
-
-
-# =====================================================
-# LANDING
+# HOME
 # =====================================================
 def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "home.html")
-
 
 # =====================================================
 # AUTH
@@ -46,6 +44,7 @@ def login_view(request):
         if user:
             login(request, user)
             return redirect("dashboard")
+
         messages.error(request, "Invalid credentials")
 
     return render(request, "login.html")
@@ -78,32 +77,19 @@ def logout_view(request):
     logout(request)
     return redirect("login")
 
-
 # =====================================================
 # DASHBOARD
 # =====================================================
 @login_required
 def dashboard(request):
-    dataset_id = request.GET.get("dataset_id")
+    dataset = (
+        UploadedDataset.objects
+        .filter(uploaded_by=request.user, status="PROCESSED")
+        .order_by("-created_at")
+        .first()
+    )
 
-    dataset = None
     result = None
-
-    if dataset_id:
-        dataset = get_object_or_404(
-            UploadedDataset,
-            id=dataset_id,
-            uploaded_by=request.user,
-            status="PROCESSED"
-        )
-    else:
-        dataset = (
-            UploadedDataset.objects
-            .filter(uploaded_by=request.user, status="PROCESSED")
-            .order_by("-created_at")
-            .first()
-        )
-
     if dataset:
         result = PredictionResult.objects.filter(dataset=dataset).first()
 
@@ -116,29 +102,6 @@ def dashboard(request):
         }
     )
 
-
-# =====================================================
-# PROFILE
-# =====================================================
-@login_required
-def profile_view(request):
-    datasets = (
-        UploadedDataset.objects
-        .filter(uploaded_by=request.user)
-        .order_by("-created_at")
-    )
-
-    return render(
-        request,
-        "profile.html",
-        {
-            "user_obj": request.user,
-            "datasets": datasets,
-            "total_datasets": datasets.count(),
-        }
-    )
-
-
 # =====================================================
 # UPLOAD DATASET
 # =====================================================
@@ -149,7 +112,7 @@ def upload_dataset(request):
             file = request.FILES.get("dataset")
 
             if not file or not file.name.endswith(".csv"):
-                messages.error(request, "Please upload a CSV file.")
+                messages.error(request, "Upload a valid CSV file.")
                 return render(request, "upload.html")
 
             dataset = UploadedDataset.objects.create(
@@ -160,12 +123,6 @@ def upload_dataset(request):
             )
 
             df = pd.read_csv(dataset.file.path)
-            if df.empty:
-                dataset.status = "FAILED"
-                dataset.save()
-                messages.error(request, "CSV is empty.")
-                return render(request, "upload.html")
-
             dataset.total_rows = len(df)
             dataset.total_columns = len(df.columns)
             dataset.save()
@@ -179,9 +136,8 @@ def upload_dataset(request):
 
     return render(request, "upload.html")
 
-
 # =====================================================
-# RUN FRAUD DETECTION (STREAMLIT API)
+# RUN FRAUD DETECTION (API CALL)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -200,7 +156,8 @@ def run_detection(request, dataset_id):
             )
 
         response.raise_for_status()
-        output = response.json()["data"]
+        output = response.json()
+
         summary = output["summary"]
 
         PredictionResult.objects.create(
@@ -208,13 +165,9 @@ def run_detection(request, dataset_id):
             total_clicks=summary["total_clicks"],
             fraud_clicks=summary["fraud_clicks"],
             legit_clicks=summary["legit_clicks"],
-            metrics={
-                "summary": summary,
-                "business_impact": output.get("business_impact", {}),
-                "time_trends": output.get("time_trends", []),
-                "shap_summary": output.get("shap_summary", []),
-            },
-            ip_risk=output.get("ip_risk", []),
+            metrics=output,
+            ip_risk=output["ip_risk"],
+            business_impact=output["business_impact"],
         )
 
         dataset.status = "PROCESSED"
@@ -223,17 +176,11 @@ def run_detection(request, dataset_id):
         messages.success(request, "Fraud detection completed.")
         return redirect("dashboard")
 
-    except requests.exceptions.Timeout:
-        messages.error(request, "ML service timeout.")
-    except requests.exceptions.RequestException:
-        messages.error(request, "ML service unavailable.")
-    except Exception:
-        messages.error(request, "Fraud detection failed.")
-
-    dataset.status = "FAILED"
-    dataset.save()
-    return redirect("dashboard")
-
+    except Exception as e:
+        dataset.status = "FAILED"
+        dataset.save()
+        messages.error(request, f"Fraud detection failed: {e}")
+        return redirect("dashboard")
 
 # =====================================================
 # EXPORT IP BLACKLIST
@@ -266,30 +213,6 @@ def export_ip_blacklist(request, dataset_id):
     return response
 
 
-# =====================================================
-# OPTIONAL API ENDPOINT
-# =====================================================
-@csrf_exempt
-@require_http_methods(["POST"])
-def api_predict_fraud(request):
-    try:
-        uploaded = request.FILES["file"]
-        response = requests.post(
-            STREAMLIT_API_URL,
-            files={"file": uploaded},
-            timeout=180
-        )
-
-        response.raise_for_status()
-        return JsonResponse(
-            {"status": "success", "data": response.json()["data"]}
-        )
-
-    except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": str(e)},
-            status=500
-        )
 
 
 
