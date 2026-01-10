@@ -5,7 +5,7 @@ except ImportError:
 
 import numpy as np
 from collections import defaultdict
-from fraudapp.ml_engine.logger import get_logger
+from ml_engine.logger import get_logger
 
 logger = get_logger(__name__)
 
