@@ -11,3 +11,4 @@ predictor = FraudPredictor()
 async def predict(file: UploadFile = File(...)):
     df = pd.read_csv(file.file)
     return predictor.predict(df)
+

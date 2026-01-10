@@ -1,20 +1,18 @@
-import shap
+try:
+    import shap
+except ImportError:
+    shap = None
+
 import numpy as np
 from collections import defaultdict
-from ml_engine.logger import get_logger
+from fraudapp.ml_engine.logger import get_logger
 
 logger = get_logger(__name__)
 
-# ======================================================
-# CONFIG
-# ======================================================
 SHAP_EXPLAIN_SAMPLES = 200
 SHAP_MAX_FEATURES = 13
 
 
-# ======================================================
-# 🔎 LATENT → BEHAVIORAL CATEGORY MAPPING
-# ======================================================
 def get_latent_feature_label(i: int) -> str:
     if 1 <= i <= 30:
         return "Click Frequency & Burst Behavior"
@@ -30,18 +28,13 @@ def get_latent_feature_label(i: int) -> str:
         return "Composite Behavioral Signature"
 
 
-# ======================================================
-# SHAP EXPLAINER
-# ======================================================
 class SHAPExplainer:
     def __init__(self, model):
+        if shap is None:
+            raise RuntimeError("SHAP not installed")
         self.explainer = shap.TreeExplainer(model)
 
     def explain(self, X: np.ndarray):
-        logger.debug(
-            "Generating SHAP explanations (behavior-level aggregation)"
-        )
-
         max_rows = min(len(X), SHAP_EXPLAIN_SAMPLES)
         X_sample = X[:max_rows]
 
@@ -60,16 +53,14 @@ class SHAPExplainer:
             behavior_shap[behavior] += float(mean_abs[i])
 
         return [
-            {
-                "feature": behavior,
-                "mean_shap": round(value, 4)
-            }
+            {"feature": behavior, "mean_shap": round(value, 4)}
             for behavior, value in sorted(
                 behavior_shap.items(),
                 key=lambda x: x[1],
                 reverse=True
             )
         ]
+
 
 
 

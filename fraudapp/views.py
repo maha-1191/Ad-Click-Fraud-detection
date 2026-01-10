@@ -141,9 +141,6 @@ def upload_dataset(request):
     return render(request, "upload.html")
 
 
-# =====================================================
-# RUN FRAUD DETECTION (FIXED – NO LOCALHOST)
-# =====================================================
 @login_required
 def run_detection(request, dataset_id):
     dataset = get_object_or_404(
@@ -152,34 +149,38 @@ def run_detection(request, dataset_id):
         uploaded_by=request.user
     )
 
-    try:
-        # ✅ FIX: Direct ML inference (NO HTTP / NO localhost)
-        df = pd.read_csv(dataset.file.path)
+    ML_API_URL = os.getenv(
+        "ML_API_URL",
+        "https://fraud-ml-api.onrender.com/predict"
+    )
 
-        predictor = FraudPredictor()
-        data = predictor.predict(df)
+    try:
+        with open(dataset.file.path, "rb") as f:
+            response = requests.post(
+                ML_API_URL,
+                files={"file": f},
+                timeout=300
+            )
+
+        response.raise_for_status()
+        data = response.json()
 
         summary = data.get("summary", {})
 
         PredictionResult.objects.create(
             dataset=dataset,
-
             total_clicks=summary.get("total_clicks", 0),
             fraud_clicks=summary.get("fraud_clicks", 0),
             legit_clicks=summary.get("legit_clicks", 0),
-
             metrics=summary,
             ip_risk=data.get("ip_risk", []),
-            asn_risk=data.get("asn_risk", []),
             business_impact=data.get("business_impact", {}),
-
             time_trends=data.get("time_trends", []),
             shap_summary=data.get("shap_summary", []),
         )
 
         dataset.status = "PROCESSED"
         dataset.save()
-
         messages.success(request, "Fraud detection completed successfully.")
 
     except Exception as e:
@@ -188,6 +189,7 @@ def run_detection(request, dataset_id):
         messages.error(request, f"Fraud detection failed: {e}")
 
     return redirect("dashboard")
+
 
 
 # =====================================================
