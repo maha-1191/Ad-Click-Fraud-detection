@@ -142,7 +142,7 @@ def upload_dataset(request):
 
 
 # =====================================================
-# RUN FRAUD DETECTION (REAL API – FIXED)
+# RUN FRAUD DETECTION (FIXED – NO LOCALHOST)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -152,44 +152,30 @@ def run_detection(request, dataset_id):
         uploaded_by=request.user
     )
 
-    # Local testing URL (Render will override via env var)
-    ML_API_URL = os.getenv(
-        "ML_API_URL",
-        "http://127.0.0.1:8000/predict"
-    )
-
     try:
-        # Send CSV to FastAPI ML service
-        with open(dataset.file.path, "rb") as f:
-            response = requests.post(
-                ML_API_URL,
-                files={"file": f},
-                timeout=300
-            )
+        # ✅ FIX: Direct ML inference (NO HTTP / NO localhost)
+        df = pd.read_csv(dataset.file.path)
 
-        response.raise_for_status()
-        data = response.json()
+        predictor = FraudPredictor()
+        data = predictor.predict(df)
 
         summary = data.get("summary", {})
 
-        # SAVE ALL REQUIRED FIELDS (IMPORTANT FIX)
         PredictionResult.objects.create(
-    dataset=dataset,
+            dataset=dataset,
 
-    total_clicks=summary.get("total_clicks", 0),
-    fraud_clicks=summary.get("fraud_clicks", 0),
-    legit_clicks=summary.get("legit_clicks", 0),
+            total_clicks=summary.get("total_clicks", 0),
+            fraud_clicks=summary.get("fraud_clicks", 0),
+            legit_clicks=summary.get("legit_clicks", 0),
 
-    metrics=summary,
-    ip_risk=data.get("ip_risk", []),
-    asn_risk=data.get("asn_risk", []),
-    business_impact=data.get("business_impact", {}),
+            metrics=summary,
+            ip_risk=data.get("ip_risk", []),
+            asn_risk=data.get("asn_risk", []),
+            business_impact=data.get("business_impact", {}),
 
-    # ✅ ADD THESE TWO
-    time_trends=data.get("time_trends", []),
-    shap_summary=data.get("shap_summary", []),
-)
-
+            time_trends=data.get("time_trends", []),
+            shap_summary=data.get("shap_summary", []),
+        )
 
         dataset.status = "PROCESSED"
         dataset.save()
@@ -235,28 +221,6 @@ def export_ip_blacklist(request, dataset_id):
     return response
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # =====================================================
 # PROFILE
 # =====================================================
@@ -280,7 +244,7 @@ def profile_view(request):
 
 
 # =====================================================
-# PREDICT API
+# PREDICT API (UNCHANGED)
 # =====================================================
 @csrf_exempt
 def predict_api(request):
@@ -293,13 +257,13 @@ def predict_api(request):
     try:
         file = request.FILES["file"]
         df = pd.read_csv(file)
-        
-        # Instantiate predictor (loads models)
+
         predictor = FraudPredictor()
         result = predictor.predict(df)
-        
+
         return JsonResponse(result)
 
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
+
 
