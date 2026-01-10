@@ -141,6 +141,9 @@ def upload_dataset(request):
     return render(request, "upload.html")
 
 
+# =====================================================
+# RUN FRAUD DETECTION (FASTAPI ON RENDER)
+# =====================================================
 @login_required
 def run_detection(request, dataset_id):
     dataset = get_object_or_404(
@@ -158,7 +161,13 @@ def run_detection(request, dataset_id):
         with open(dataset.file.path, "rb") as f:
             response = requests.post(
                 ML_API_URL,
-                files={"file": f},
+                files={
+                    "file": (
+                        dataset.original_filename,
+                        f,
+                        "text/csv"
+                    )
+                },
                 timeout=300
             )
 
@@ -169,9 +178,11 @@ def run_detection(request, dataset_id):
 
         PredictionResult.objects.create(
             dataset=dataset,
+
             total_clicks=summary.get("total_clicks", 0),
             fraud_clicks=summary.get("fraud_clicks", 0),
             legit_clicks=summary.get("legit_clicks", 0),
+
             metrics=summary,
             ip_risk=data.get("ip_risk", []),
             business_impact=data.get("business_impact", {}),
@@ -181,6 +192,7 @@ def run_detection(request, dataset_id):
 
         dataset.status = "PROCESSED"
         dataset.save()
+
         messages.success(request, "Fraud detection completed successfully.")
 
     except Exception as e:
@@ -189,7 +201,6 @@ def run_detection(request, dataset_id):
         messages.error(request, f"Fraud detection failed: {e}")
 
     return redirect("dashboard")
-
 
 
 # =====================================================
@@ -246,7 +257,7 @@ def profile_view(request):
 
 
 # =====================================================
-# PREDICT API (UNCHANGED)
+# LOCAL PREDICT API (OPTIONAL)
 # =====================================================
 @csrf_exempt
 def predict_api(request):
