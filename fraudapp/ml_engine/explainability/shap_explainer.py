@@ -1,29 +1,19 @@
-import shap
+try:
+    import shap
+except ImportError:
+    shap = None
+
 import numpy as np
 from collections import defaultdict
 from fraudapp.ml_engine.logger import get_logger
 
 logger = get_logger(__name__)
 
-# ======================================================
-# CONFIG
-# ======================================================
 SHAP_EXPLAIN_SAMPLES = 200
 SHAP_MAX_FEATURES = 13
 
 
-# ======================================================
-# 🔎 LATENT → BEHAVIORAL CATEGORY MAPPING
-# (Range-based, future-proof)
-# ======================================================
 def get_latent_feature_label(i: int) -> str:
-    """
-    Maps latent feature indices to high-level
-    behavioral categories.
-
-    Multiple latent features may map to the same category.
-    """
-
     if 1 <= i <= 30:
         return "Click Frequency & Burst Behavior"
     elif 31 <= i <= 60:
@@ -38,20 +28,12 @@ def get_latent_feature_label(i: int) -> str:
         return "Composite Behavioral Signature"
 
 
-# ======================================================
-# SHAP EXPLAINER
-# ======================================================
 class SHAPExplainer:
-    """
-    SHAP explainability for XGBoost trained on
-    CNN–RNN latent behavioral embeddings.
-
-    Latent SHAP values are aggregated into
-    high-level behavioral categories for
-    human interpretability.
-    """
-
     def __init__(self, model):
+        if shap is None:
+            raise RuntimeError(
+                "SHAP is not installed. Explainability is disabled in this environment."
+            )
         self.explainer = shap.TreeExplainer(model)
 
     def explain(self, X: np.ndarray):
@@ -59,32 +41,25 @@ class SHAPExplainer:
             "Generating SHAP explanations (behavior-level aggregation)"
         )
 
-        # -------- Sample for efficiency --------
         max_rows = min(len(X), SHAP_EXPLAIN_SAMPLES)
         X_sample = X[:max_rows]
 
-        # -------- SHAP values --------
         shap_values = self.explainer.shap_values(X_sample)
 
-        # Binary classifier safety
         if isinstance(shap_values, list):
             shap_values = shap_values[1]
 
-        # -------- Mean |SHAP| per latent dimension --------
         mean_abs = np.abs(shap_values).mean(axis=0)
 
-        # Take top-K influential latent dimensions
         top_idx = np.argsort(mean_abs)[-SHAP_MAX_FEATURES:][::-1]
 
-        # -------- Aggregate by behavioral category --------
         behavior_shap = defaultdict(float)
 
         for i in top_idx:
             behavior = get_latent_feature_label(i)
             behavior_shap[behavior] += float(mean_abs[i])
 
-        # -------- Final sorted output --------
-        result = [
+        return [
             {
                 "feature": behavior,
                 "mean_shap": round(value, 4)
@@ -95,8 +70,6 @@ class SHAPExplainer:
                 reverse=True
             )
         ]
-
-        return result
 
 
 
