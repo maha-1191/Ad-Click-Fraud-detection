@@ -152,7 +152,7 @@ def run_detection(request, dataset_id):
     ML_API_URL = os.getenv(
         "ML_API_URL",
         "https://fraud-ml-api.onrender.com/predict"
-    )
+    ).strip()
 
     try:
         with open(dataset.file.path, "rb") as f:
