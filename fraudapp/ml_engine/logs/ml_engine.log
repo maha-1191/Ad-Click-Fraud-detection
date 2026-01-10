@@ -1072,3 +1072,5 @@ NameError: name 'HOURLY_TRAFFIC_WEIGHTS' is not defined
 2026-01-05 00:06:45 | INFO | fraudapp.views | Using UPDATED FraudPredictor
 2026-01-05 00:06:49 | INFO | fraudapp.ml_engine.training.model_registry | Building CNN-RNN model (input_dim=14)
 2026-01-05 00:07:19 | INFO | fraudapp.ml_engine.explainability.shap_explainer | Generating SHAP explanations (behavior-level aggregation)
+2026-01-10 15:06:01 | INFO | fraudapp.ml_engine.inference.predictor | Loading trained XGBoost model (inference)
+2026-01-10 15:06:01 | INFO | fraudapp.ml_engine.inference.predictor | Loading CNN–RNN model (inference)

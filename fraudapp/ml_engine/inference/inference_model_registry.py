@@ -1,7 +1,7 @@
 import joblib
 import torch
 from fraudapp.ml_engine.models.cnn_rnn import CNNRNNModel
-from fraudapp.ml_engine.models.xgb_model import XGBModel
+from fraudapp.ml_engine.models.xgb_model import XGBoostFraudClassifier as XGBModel
 
 class InferenceModelRegistry:
 

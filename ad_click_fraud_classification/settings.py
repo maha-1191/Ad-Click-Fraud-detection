@@ -15,14 +15,18 @@ SECRET_KEY = os.environ.get(
     "unsafe-dev-key-for-final-year-project"
 )
 
-DEBUG = False  # MUST be False on Render
+DEBUG = 'RENDER' not in os.environ
 
-ALLOWED_HOSTS = [
+ALLOWED_HOSTS = []
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    
+ALLOWED_HOSTS.extend([
     "ad-click-fraud-detection.onrender.com",
-    ".onrender.com",
     "localhost",
     "127.0.0.1",
-]
+])
 
 
 # ==================================================
@@ -96,15 +100,23 @@ ASGI_APPLICATION = "ad_click_fraud_classification.asgi.application"
 # ==================================================
 # DATABASE (SQLite – SAFE FOR FREE RENDER)
 # ==================================================
+# DATABASE
+# ==================================================
+# Render provides DATABASE_URL. If present, use it (Postgres).
+# Fallback to SQLite (data will be lost on restart in free tier).
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
-        "OPTIONS": {
-            "timeout": 30,
-        },
     }
 }
+
+if "RENDER" in os.environ:
+    import dj_database_url
+    db_from_env = dj_database_url.config(conn_max_age=600)
+    DATABASES["default"].update(db_from_env)
+
 
 
 # ==================================================

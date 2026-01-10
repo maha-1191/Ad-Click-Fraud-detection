@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: ad-click-fraud-detection
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn ad_click_fraud_classification.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4

@@ -42,10 +42,6 @@ class UploadedDataset(models.Model):
 
 
 class PredictionResult(models.Model):
-    """
-    Stores inference + business intelligence output
-    """
-
     dataset = models.OneToOneField(
         UploadedDataset,
         on_delete=models.CASCADE,
@@ -56,20 +52,19 @@ class PredictionResult(models.Model):
     fraud_clicks = models.PositiveIntegerField(default=0)
     legit_clicks = models.PositiveIntegerField(default=0)
 
-    # Core inference summary
     metrics = models.JSONField(default=dict)
 
-    # Advertiser intelligence
     ip_risk = models.JSONField(default=list)
     asn_risk = models.JSONField(default=list)
 
-    # Business impact estimation
     business_impact = models.JSONField(default=dict)
+
+    # ✅ ADD THESE TWO LINES
+    time_trends = models.JSONField(default=list)
+    shap_summary = models.JSONField(default=list)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"PredictionResult for Dataset {self.dataset.id}"
 
 
 
