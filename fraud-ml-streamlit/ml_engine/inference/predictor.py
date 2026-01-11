@@ -39,9 +39,7 @@ class FraudPredictor:
         assert (self.config.MODEL_DIR / "xgb.joblib").exists()
 
         logger.info("Loading XGBoost model (inference)")
-        self.xgb_model = InferenceModelRegistry.load_xgb(
-            self.config.MODEL_DIR
-        )
+        self.xgb_model = InferenceModelRegistry.load_xgb(self.config.MODEL_DIR)
 
     def _load_deep_model(self, input_dim: int):
         self.deep_model = InferenceModelRegistry.load_deep(
@@ -81,26 +79,19 @@ class FraudPredictor:
             sequence_length=SEQUENCE_LENGTH
         )
 
-        if len(X_seq) == 0:
-            raise ValueError("No sequences generated")
-
         if self.deep_model is None:
             self._load_deep_model(X_seq.shape[2])
 
         embeddings = []
         with torch.no_grad():
             for i in range(0, len(X_seq), BATCH_SIZE):
-                batch = torch.from_numpy(
-                    X_seq[i:i + BATCH_SIZE]
-                ).float()
-                embeddings.append(
-                    self.deep_model(batch).numpy()
-                )
+                batch = torch.from_numpy(X_seq[i:i + BATCH_SIZE]).float()
+                embeddings.append(self.deep_model(batch).numpy())
 
         embeddings = np.vstack(embeddings)
+        probs = self.xgb_model.model.predict_proba(embeddings)[:, 1]
+       
 
-        dmatrix = xgb.DMatrix(embeddings)
-        probs = self.xgb_model.get_booster().predict(dmatrix)
 
         total_sequences = len(probs)
         fraud_sequences = int((probs >= INFERENCE_THRESHOLD).sum())
@@ -113,10 +104,7 @@ class FraudPredictor:
         fraud_clicks = len(fraud_click_ids)
         legit_clicks = total_clicks - fraud_clicks
 
-        ip_stats = defaultdict(lambda: {
-            "fraud_clicks": set(),
-            "risk_sum": 0.0
-        })
+        ip_stats = defaultdict(lambda: {"fraud_clicks": set(), "risk_sum": 0.0})
 
         for prob, click_ids in zip(probs, click_index_map):
             if prob < INFERENCE_THRESHOLD:
@@ -133,16 +121,13 @@ class FraudPredictor:
             count = len(v["fraud_clicks"])
             if count == 0:
                 continue
-
             avg_risk = v["risk_sum"] / count
-
             if avg_risk >= HIGH_RISK_THRESHOLD:
                 level, action = "HIGH", "BLOCK"
             elif avg_risk >= MEDIUM_RISK_THRESHOLD:
                 level, action = "MEDIUM", "THROTTLE"
             else:
                 continue
-
             ip_risk.append({
                 "ip": ip,
                 "avg_risk_score": round(avg_risk, 3),
@@ -153,11 +138,7 @@ class FraudPredictor:
 
         ip_risk.sort(key=lambda x: x["avg_risk_score"], reverse=True)
 
-        time_stats = {
-            h: {"total_clicks": 0, "fraud_clicks": 0}
-            for h in range(24)
-        }
-
+        time_stats = {h: {"total_clicks": 0, "fraud_clicks": 0} for h in range(24)}
         for idx, row in df.iterrows():
             h = int(row["click_hour"])
             time_stats[h]["total_clicks"] += 1
@@ -165,17 +146,12 @@ class FraudPredictor:
                 time_stats[h]["fraud_clicks"] += 1
 
         time_trends = [
-            {
-                "hour": h,
-                "total_clicks": time_stats[h]["total_clicks"],
-                "fraud_clicks": time_stats[h]["fraud_clicks"],
-            }
-            for h in range(24)
+            {"hour": h, **time_stats[h]} for h in range(24)
         ]
 
         sample_size = min(SHAP_SAMPLE_SIZE, embeddings.shape[0])
         shap_summary = SHAPExplainer(
-            self.xgb_model
+            self.xgb_model.model
         ).explain(embeddings[:sample_size])
 
         return {
@@ -185,9 +161,8 @@ class FraudPredictor:
                 "legit_clicks": legit_clicks,
                 "total_sequences": total_sequences,
                 "fraud_sequences": fraud_sequences,
-                "fraud_ratio": round(
-                    fraud_clicks / total_clicks, 4
-                ) if total_clicks > 0 else 0.0,
+                "fraud_ratio": round(fraud_clicks / total_clicks, 4)
+                if total_clicks > 0 else 0.0,
                 "inference_threshold": INFERENCE_THRESHOLD,
             },
             "ip_risk": ip_risk[:50],
