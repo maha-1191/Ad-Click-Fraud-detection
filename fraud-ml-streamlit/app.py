@@ -2,6 +2,35 @@ import streamlit as st
 import pandas as pd
 from ml_engine.inference.predictor import FraudPredictor
 
+# =================================================
+# 🔴 API MODE CHECK (MUST BE FIRST)
+# =================================================
+query_params = st.experimental_get_query_params()
+
+@st.cache_resource
+def load_predictor():
+    return FraudPredictor()
+
+predictor = load_predictor()
+
+if "api" in query_params:
+    uploaded_file = st.file_uploader(
+        label="",
+        type=["csv"]
+    )
+
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        result = predictor.predict(df)
+
+        # JSON ONLY
+        st.json(result)
+
+    st.stop()   # 🚨 CRITICAL
+
+# =================================================
+# 🟢 UI MODE (NORMAL USERS)
+# =================================================
 st.set_page_config(
     page_title="Ad Click Fraud Detection - ML Service",
     layout="centered"
@@ -10,33 +39,6 @@ st.set_page_config(
 st.title("🚨 Ad Click Fraud Detection – ML Service")
 st.caption("Inference-only CNN–RNN + XGBoost service")
 
-# -------------------------------------------------
-# Load model ONCE
-# -------------------------------------------------
-@st.cache_resource
-def load_predictor():
-    return FraudPredictor()
-
-predictor = load_predictor()
-
-# =================================================
-# 🔴 API MODE (FOR DJANGO / RENDER)
-# =================================================
-API_MODE = st.query_params.get("api") == "1"
-
-if API_MODE:
-    uploaded_file = st.file_uploader("", type=["csv"], key="api")
-
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        results = predictor.predict(df)
-
-        st.json(results)
-        st.stop()
-
-# =================================================
-# 🟢 UI MODE (FOR BROWSER USERS)
-# =================================================
 uploaded_file = st.file_uploader(
     "Upload clickstream CSV file",
     type=["csv"]
@@ -70,4 +72,5 @@ if uploaded_file:
 
         st.subheader("SHAP Explainability")
         st.dataframe(pd.DataFrame(results["shap_summary"]))
+
 

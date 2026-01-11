@@ -12,12 +12,10 @@ from django.contrib.auth.models import User
 
 from .models import UploadedDataset, PredictionResult
 
-
 # =====================================================
-# STREAMLIT ML URL (UI DEMO / ATTEMPTED API)
+# FASTAPI ML URL (IMPORTANT)
 # =====================================================
-ML_API_URL = "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app/?api=1"
-
+ML_API_URL = "https://your-fastapi-name.onrender.com/predict"
 
 # =====================================================
 # HOME
@@ -26,7 +24,6 @@ def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "home.html")
-
 
 # =====================================================
 # AUTH
@@ -50,7 +47,6 @@ def login_view(request):
 
     return render(request, "login.html")
 
-
 @require_http_methods(["GET", "POST"])
 def register_view(request):
     if request.user.is_authenticated:
@@ -72,15 +68,13 @@ def register_view(request):
 
     return render(request, "register.html")
 
-
 @login_required
 def logout_view(request):
     logout(request)
     return redirect("login")
 
-
 # =====================================================
-# PROFILE  ✅ FIXED
+# PROFILE
 # =====================================================
 @login_required
 def profile_view(request):
@@ -93,7 +87,6 @@ def profile_view(request):
         "datasets": datasets,
         "total_datasets": datasets.count(),
     })
-
 
 # =====================================================
 # DASHBOARD
@@ -116,7 +109,6 @@ def dashboard(request):
         "dataset": dataset,
         "result": result,
     })
-
 
 # =====================================================
 # UPLOAD DATASET
@@ -147,9 +139,8 @@ def upload_dataset(request):
 
     return render(request, "upload.html")
 
-
 # =====================================================
-# RUN FRAUD DETECTION (STREAMLIT CALL)
+# RUN FRAUD DETECTION (FASTAPI CALL)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -164,7 +155,11 @@ def run_detection(request, dataset_id):
             response = requests.post(
                 ML_API_URL,
                 files={
-                    "api": (dataset.original_filename, f, "text/csv")
+                    "file": (
+                        dataset.original_filename,
+                        f,
+                        "text/csv"
+                    )
                 },
                 timeout=300
             )
@@ -197,7 +192,6 @@ def run_detection(request, dataset_id):
         messages.error(request, f"Fraud detection failed: {e}")
 
     return redirect("dashboard")
-
 
 # =====================================================
 # EXPORT IP BLACKLIST
