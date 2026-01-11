@@ -53,7 +53,7 @@ class ModelRegistry:
             subsample=config.XGB_SUBSAMPLE,
             colsample_bytree=config.XGB_COLSAMPLE,
             random_state=config.RANDOM_STATE,
-            scale_pos_weight=scale_pos_weight,  # 🔥 FIX
+            scale_pos_weight=scale_pos_weight,  
         )
 
 

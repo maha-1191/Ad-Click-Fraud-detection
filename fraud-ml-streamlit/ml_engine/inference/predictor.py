@@ -99,8 +99,8 @@ class FraudPredictor:
 
         embeddings = np.vstack(embeddings)
 
-        dmatrix = xgb.DMatrix(embeddings)
-        probs = self.xgb_model.get_booster().predict(dmatrix)
+        probs = self.xgb_model.predict_proba(embeddings)[:, 1]
+
 
         total_sequences = len(probs)
         fraud_sequences = int((probs >= INFERENCE_THRESHOLD).sum())
