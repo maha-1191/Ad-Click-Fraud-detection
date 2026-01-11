@@ -1,16 +1,28 @@
 import streamlit as st
+
+# MUST be the first Streamlit command
+st.set_page_config(
+    page_title="Ad Click Fraud Detection - ML Service",
+    layout="centered"
+)
+
 import pandas as pd
 from ml_engine.inference.predictor import FraudPredictor
 
 
-query_params = st.experimental_get_query_params()
+# NEW API (replaces experimental_get_query_params)
+query_params = st.query_params
+
 
 @st.cache_resource
 def load_predictor():
     return FraudPredictor()
 
+
 predictor = load_predictor()
 
+
+# ---------- API MODE ----------
 if "api" in query_params:
     uploaded_file = st.file_uploader(
         label="",
@@ -20,17 +32,12 @@ if "api" in query_params:
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
         result = predictor.predict(df)
-
         st.json(result)
 
     st.stop()
 
 
-st.set_page_config(
-    page_title="Ad Click Fraud Detection - ML Service",
-    layout="centered"
-)
-
+# ---------- UI MODE ----------
 st.title("Ad Click Fraud Detection – ML Service")
 st.caption("Inference-only CNN–RNN + XGBoost service")
 
@@ -67,5 +74,6 @@ if uploaded_file:
 
         st.subheader("SHAP Explainability")
         st.dataframe(pd.DataFrame(results["shap_summary"]))
+
 
 
