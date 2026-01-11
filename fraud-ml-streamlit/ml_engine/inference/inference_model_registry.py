@@ -1,19 +1,15 @@
+import joblib
 import torch
 from ml_engine.models.cnn_rnn import CNNRNNModel
-from ml_engine.models.xgb_model import XGBModel
 
 
 class InferenceModelRegistry:
-    """
-    Load-only registry for inference (no training code)
-    """
-
     @staticmethod
     def load_xgb(model_dir):
-        model = XGBModel()
-        model.load(model_dir)
-        if not hasattr(model.model, "use_label_encoder"):
-            model.model.use_label_encoder = False
+        model = joblib.load(model_dir / "xgb.joblib")
+
+        if hasattr(model, "use_label_encoder"):
+            model.use_label_encoder = False
 
         return model
 
@@ -28,3 +24,4 @@ class InferenceModelRegistry:
         )
         model.eval()
         return model
+
