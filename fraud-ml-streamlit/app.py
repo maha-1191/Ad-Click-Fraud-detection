@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import json
 from ml_engine.inference.predictor import FraudPredictor
 
 st.set_page_config(
@@ -23,7 +22,9 @@ predictor = load_predictor()
 # =================================================
 # 🔴 API MODE (FOR DJANGO / RENDER)
 # =================================================
-if "api" in st.query_params:
+API_MODE = st.query_params.get("api") == "1"
+
+if API_MODE:
     uploaded_file = st.file_uploader("", type=["csv"], key="api")
 
     if uploaded_file:
@@ -69,3 +70,4 @@ if uploaded_file:
 
         st.subheader("SHAP Explainability")
         st.dataframe(pd.DataFrame(results["shap_summary"]))
+
