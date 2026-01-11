@@ -1,5 +1,4 @@
 import csv
-import os
 import requests
 import pandas as pd
 
@@ -15,7 +14,7 @@ from .models import UploadedDataset, PredictionResult
 
 
 # =====================================================
-# STREAMLIT ML API URL (FINAL)
+# STREAMLIT ML URL (UI DEMO / ATTEMPTED API)
 # =====================================================
 ML_API_URL = "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app/?api=1"
 
@@ -81,6 +80,22 @@ def logout_view(request):
 
 
 # =====================================================
+# PROFILE  ✅ FIXED
+# =====================================================
+@login_required
+def profile_view(request):
+    datasets = UploadedDataset.objects.filter(
+        uploaded_by=request.user
+    ).order_by("-created_at")
+
+    return render(request, "profile.html", {
+        "user_obj": request.user,
+        "datasets": datasets,
+        "total_datasets": datasets.count(),
+    })
+
+
+# =====================================================
 # DASHBOARD
 # =====================================================
 @login_required
@@ -134,7 +149,7 @@ def upload_dataset(request):
 
 
 # =====================================================
-# RUN FRAUD DETECTION (STREAMLIT HTTP CALL)
+# RUN FRAUD DETECTION (STREAMLIT CALL)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -149,12 +164,7 @@ def run_detection(request, dataset_id):
             response = requests.post(
                 ML_API_URL,
                 files={
-                    # MUST be "api" (matches Streamlit uploader key)
-                    "api": (
-                        dataset.original_filename,
-                        f,
-                        "text/csv"
-                    )
+                    "api": (dataset.original_filename, f, "text/csv")
                 },
                 timeout=300
             )
@@ -218,6 +228,7 @@ def export_ip_blacklist(request, dataset_id):
         ])
 
     return response
+
 
 
 
