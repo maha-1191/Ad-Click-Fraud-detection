@@ -1,6 +1,4 @@
 import torch
-
-# ✅ Streamlit-safe imports (NO fraudapp)
 from ml_engine.models.cnn_rnn import CNNRNNModel
 from ml_engine.models.xgb_model import XGBModel
 
@@ -14,8 +12,6 @@ class InferenceModelRegistry:
     def load_xgb(model_dir):
         model = XGBModel()
         model.load(model_dir)
-
-        # 🔧 FIX: XGBoost + sklearn compatibility
         if not hasattr(model.model, "use_label_encoder"):
             model.model.use_label_encoder = False
 

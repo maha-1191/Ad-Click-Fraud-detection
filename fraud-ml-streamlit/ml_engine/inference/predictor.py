@@ -4,11 +4,9 @@ from collections import defaultdict
 import pandas as pd
 import torch
 import numpy as np
-import joblib
 import socket
 import struct
 import xgboost as xgb
-
 
 from ml_engine.logger import get_logger
 from ml_engine.data_pipeline.data_validation import DataValidator
@@ -23,9 +21,9 @@ from ml_engine.inference.inference_model_registry import InferenceModelRegistry
 
 logger = get_logger(__name__)
 
-
 ASSUMED_CPC_INR = 5.0
 
+# ✅ SAME thresholds as Django
 INFERENCE_BLOCK_THRESHOLD = 0.03
 HIGH_RISK_THRESHOLD = 0.03
 MEDIUM_RISK_THRESHOLD = 0.05
@@ -33,16 +31,7 @@ MEDIUM_RISK_THRESHOLD = 0.05
 
 class FraudPredictor:
     """
-    INFERENCE-ONLY FRAUD DETECTION ENGINE
-
-    CSV
-      → Preprocess
-      → Feature Engineering
-      → IP-based Sequence Builder
-      → CNN–RNN (sequence embeddings)
-      → XGBoost (fraud probability)
-      → Click-level aggregation
-      → Limited SHAP explainability
+    INFERENCE-ONLY FRAUD DETECTION ENGINE (STREAMLIT)
     """
 
     def __init__(self):
@@ -50,15 +39,10 @@ class FraudPredictor:
         self.deep_model = None
 
         assert (self.config.MODEL_DIR / "deep_model.pt").exists()
-        assert (self.config.MODEL_DIR / "threshold.joblib").exists()
 
-        logger.info("Loading trained XGBoost model (inference)")
+        logger.info("Loading XGBoost model (inference)")
         self.xgb_model = InferenceModelRegistry.load_xgb(
             self.config.MODEL_DIR
-        )
-
-        self.trained_threshold = joblib.load(
-            self.config.MODEL_DIR / "threshold.joblib"
         )
 
     def _load_deep_model(self, input_dim: int):
@@ -87,14 +71,18 @@ class FraudPredictor:
 
     def predict(self, df: pd.DataFrame) -> Dict[str, Any]:
 
+        # 1. Validation
         DataValidator.validate(df, training=False)
         total_clicks = len(df)
 
+        # 2. Preprocessing
         df = preprocess_data(df)
 
+        # 3. Feature engineering
         X, _ = build_features(df, inference=True)
         X = X.apply(pd.to_numeric, errors="coerce").fillna(0)
 
+        # 4. Sequence building
         df_seq = X.copy()
         df_seq["ip"] = df["ip"].values
         df_seq["click_hour"] = df["click_hour"].values
@@ -107,29 +95,28 @@ class FraudPredictor:
         if len(X_seq) == 0:
             raise ValueError("No sequences generated")
 
+        # 5. Load deep model
         if self.deep_model is None:
             self._load_deep_model(X_seq.shape[2])
 
+        # 6. CNN–RNN embeddings
         embeddings = []
         with torch.no_grad():
             for i in range(0, len(X_seq), 512):
-                batch = torch.from_numpy(
-                    X_seq[i:i + 512]
-                ).float()
-                embeddings.append(
-                    self.deep_model(batch).numpy()
-                )
+                batch = torch.from_numpy(X_seq[i:i + 512]).float()
+                embeddings.append(self.deep_model(batch).numpy())
 
         embeddings = np.vstack(embeddings)
 
+        # ✅ IMPORTANT: booster.predict (NOT predict_proba)
         dmatrix = xgb.DMatrix(embeddings)
         probs = self.xgb_model.model.get_booster().predict(dmatrix)
 
         total_sequences = len(probs)
         fraud_sequences = int((probs >= INFERENCE_BLOCK_THRESHOLD).sum())
 
+        # 7. Click-level aggregation
         fraud_click_ids = set()
-
         for prob, click_ids in zip(probs, click_index_map):
             if prob >= INFERENCE_BLOCK_THRESHOLD:
                 fraud_click_ids.update(click_ids)
@@ -137,6 +124,7 @@ class FraudPredictor:
         fraud_clicks = len(fraud_click_ids)
         legit_clicks = total_clicks - fraud_clicks
 
+        # 8. IP risk
         ip_stats = defaultdict(lambda: {
             "fraud_clicks": set(),
             "risk_sum": 0.0
@@ -155,13 +143,12 @@ class FraudPredictor:
                 ip_stats[ip]["risk_sum"] += prob
 
         ip_risk = []
-
         for ip, v in ip_stats.items():
-            fraud_click_count = len(v["fraud_clicks"])
-            if fraud_click_count == 0:
+            count = len(v["fraud_clicks"])
+            if count == 0:
                 continue
 
-            avg_risk = v["risk_sum"] / fraud_click_count
+            avg_risk = v["risk_sum"] / count
 
             if avg_risk >= HIGH_RISK_THRESHOLD:
                 level, action = "HIGH", "BLOCK"
@@ -173,33 +160,35 @@ class FraudPredictor:
             ip_risk.append({
                 "ip": ip,
                 "avg_risk_score": round(avg_risk, 3),
-                "fraud_clicks": fraud_click_count,
+                "fraud_clicks": count,
                 "risk_level": level,
                 "recommended_action": action,
             })
 
         ip_risk.sort(key=lambda x: x["avg_risk_score"], reverse=True)
 
+        # 9. Hourly trends
         time_stats = {
-            hour: {"total_clicks": 0, "fraud_clicks": 0}
-            for hour in range(24)
+            h: {"total_clicks": 0, "fraud_clicks": 0}
+            for h in range(24)
         }
 
         for idx, row in df.iterrows():
-            hour = int(row["click_hour"])
-            time_stats[hour]["total_clicks"] += 1
+            h = int(row["click_hour"])
+            time_stats[h]["total_clicks"] += 1
             if idx in fraud_click_ids:
-                time_stats[hour]["fraud_clicks"] += 1
+                time_stats[h]["fraud_clicks"] += 1
 
         time_trends = [
             {
-                "hour": hour,
-                "total_clicks": time_stats[hour]["total_clicks"],
-                "fraud_clicks": time_stats[hour]["fraud_clicks"],
+                "hour": h,
+                "total_clicks": time_stats[h]["total_clicks"],
+                "fraud_clicks": time_stats[h]["fraud_clicks"],
             }
-            for hour in range(24)
+            for h in range(24)
         ]
 
+        # 10. SHAP (sampled)
         sample_size = min(50, embeddings.shape[0])
         shap_summary = SHAPExplainer(
             self.xgb_model.model
@@ -227,6 +216,7 @@ class FraudPredictor:
             },
             "shap_summary": shap_summary,
         }
+
 
 
 
