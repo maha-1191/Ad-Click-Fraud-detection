@@ -59,11 +59,11 @@ class PredictionResult(models.Model):
 
     business_impact = models.JSONField(default=dict)
 
-    # ✅ ADD THESE TWO LINES
     time_trends = models.JSONField(default=list)
     shap_summary = models.JSONField(default=list)
 
     created_at = models.DateTimeField(auto_now_add=True)
+
 
 
 

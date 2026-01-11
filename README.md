@@ -1,171 +1,88 @@
-🚨 Ad Click Fraud Classification System
-📌 About the Project
+Ad Click Fraud Classification System
+About the Project
 
-This project is an Ad Click Fraud Classification System designed to identify fraudulent and legitimate ad clicks in digital advertising platforms.
+This project is an Ad Click Fraud Classification System designed to detect fraudulent and legitimate ad clicks in digital advertising platforms.
+Online advertising systems are frequently targeted by automated bots and malicious users who generate fake clicks, leading to financial loss and distorted campaign analytics.
 
-Online advertisements are often targeted by 🤖 bots and ⚠️ malicious users who generate fake clicks. These fake clicks increase advertising costs and reduce campaign performance.
-To solve this problem, the system uses a hybrid deep learning approach that learns user click behavior and detects fraud accurately.
+To address this problem, the system uses a hybrid deep learning framework that learns complex click behavior patterns and accurately identifies fraud.
 
-🧠 Hybrid Learning Approach
+Hybrid Learning Approach
 
-The system combines multiple models to improve accuracy:
+The system combines multiple models to improve robustness and accuracy:
 
-🧩 CNN – Learns spatial click patterns
+CNN for extracting spatial patterns from click features
 
-⏱️ RNN / LSTM – Understands time-based click behavior
+RNN / LSTM for modeling sequential and temporal click behavior
 
-🌳 XGBoost – Makes the final fraud classification decision
+XGBoost for final fraud probability prediction
 
-To make predictions transparent and trustworthy, the system uses 🔍 SHAP, which explains why a click is classified as fraud or legitimate.
+To ensure transparency, SHAP explainability is used to interpret model decisions and highlight the most influential behavioral patterns.
 
-🌐 Web Application Features
+Web Application Features
 
-The entire solution is built as a Django web application, where users can:
+The solution is implemented as a Django-based web application that allows users to:
 
-📂 Upload clickstream CSV files
+Upload clickstream CSV files
 
-📊 Analyze fraud detection results
+Run fraud detection locally
 
-📈 View fraud metrics and charts
+View fraud statistics and risk summaries
 
-🧠 Understand model decisions using explainable AI
+Analyze IP-level risk and time-based trends
 
-This project is suitable for real-world applications, not just academic experiments, and follows good software engineering practices such as modular design, logging, and error handling.
+Understand predictions through explainable AI outputs
 
-⭐ Key Highlights
+The system is modular, well-logged, and designed following good software engineering practices.
 
-✅ Detects ad click fraud accurately
+Key Highlights
 
-🧠 Uses hybrid deep learning (CNN + RNN + XGBoost)
+Accurate ad click fraud detection
 
-🔍 Provides explainable predictions using SHAP
+Hybrid model: CNN + RNN/LSTM + XGBoost
 
-🖥️ Web-based system with interactive dashboard
+Explainable predictions using SHAP
 
-🚀 Scalable and production-ready design
+Fully local Django-based execution
 
-ad_click_fraud_classification/
-│
-├── ad_click_fraud_classification/
-│   ├── __init__.py
-│   ├── asgi.py
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── fraudapp/
-│   ├── migrations/
-│   │   └── __init__.py
-│   │
-│   ├── ml_engine/
-│   │   ├── artifacts/
-│   │   │   ├── deep_model.pt
-│   │   │   ├── threshold.joblib
-│   │   │   └── xgb.joblib
-│   │   │
-│   │   ├── data_data/
-│   │   │   └── train.csv
-│   │   │
-│   │   ├── data_pipeline/
-│   │   │   ├── __init__.py
-│   │   │   ├── data_validation.py
-│   │   │   ├── preprocessing.py
-│   │   │   ├── features.py
-│   │   │   └── sequence_builder.py
-│   │   │
-│   │   ├── explainability/
-│   │   │   ├── __init__.py
-│   │   │   └── shap_explainer.py
-│   │   │
-│   │   ├── inference/
-│   │   │   ├── __init__.py
-│   │   │   └── predictor.py
-│   │   │
-│   │   ├── logs/
-│   │   │
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   ├── cnn_model.py
-│   │   │   ├── rnn_model.py
-│   │   │   ├── cnn_rnn.py
-│   │   │   └── xgb_model.py
-│   │   │
-│   │   ├── training/
-│   │   │   ├── __init__.py
-│   │   │   ├── deep_trainer.py
-│   │   │   ├── model_registry.py
-│   │   │   ├── run_training.py
-│   │   │   ├── smote_handler.py
-│   │   │   └── training_config.py
-│   │   │
-│   │   ├── evaluation.py
-│   │   ├── pipeline.py
-│   │   ├── logger.py
-│   │   └── exceptions.py
-│   │
-│   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── urls.py
-│   ├── utils.py
-│   └── views.py
-│
-├── templates/
-│   ├── login.html
-│   ├── upload.html
-│   ├── dashboard.html
-│   └── results.html
-│
-├── static/
-│   ├── css/
-│   │   └── style.css
-│   └── js/
-│       └── dashboard.js
-│
-├── media/
-│
-├── venv/
-│
-├── .gitignore
-├── .python-version
-├── build.sh
-├── start.sh
-├── db.sqlite3
-├── manage.py
-├── requirements.txt
-└── README.md
+Scalable and production-ready design
 
+Local Setup Instructions
 
+Create a virtual environment:
 
-⚙️ Local Setup
-
-Follow the steps below to run the project locally.
-
-🔹 Create virtual environment
 python -m venv venv
 
-🔹 Activate virtual environment
+
+Activate the environment:
+
 venv\Scripts\activate
 
-🔹 Install required packages
+
+Install dependencies:
+
 pip install -r requirements.txt
 
-🔹 Setup database
+
+Setup the database:
+
 python manage.py makemigrations
 python manage.py migrate
 
-🔹 Train fraud detection model
+
+Train the fraud detection model:
+
 python -m fraudapp.ml_engine.training.run_training
 
-🔹 Start the project (no auto reload)
+
+Run the Django server:
+
 python manage.py runserver --noreload
 
-🌍 Access the Application
+Access URLs
 
-🏠 Application: http://127.0.0.1:8000/
+Application: http://127.0.0.1:8000/
 
-🔐 Admin Panel: http://127.0.0.1:8000/admin/
+
 
 
 

@@ -1,15 +1,9 @@
 from pathlib import Path
 import os
 
-# ==================================================
-# BASE DIRECTORY
-# ==================================================
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# ==================================================
-# SECURITY
-# ==================================================
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "unsafe-dev-key-for-final-year-project"
@@ -29,9 +23,6 @@ ALLOWED_HOSTS.extend([
 ])
 
 
-# ==================================================
-# APPLICATION DEFINITION
-# ==================================================
 INSTALLED_APPS = [
     # Django default apps
     "django.contrib.admin",
@@ -46,9 +37,6 @@ INSTALLED_APPS = [
 ]
 
 
-# ==================================================
-# MIDDLEWARE
-# ==================================================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
 
@@ -64,15 +52,9 @@ MIDDLEWARE = [
 ]
 
 
-# ==================================================
-# URL CONFIGURATION
-# ==================================================
 ROOT_URLCONF = "ad_click_fraud_classification.urls"
 
 
-# ==================================================
-# TEMPLATES
-# ==================================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -90,16 +72,10 @@ TEMPLATES = [
 ]
 
 
-# ==================================================
-# WSGI / ASGI
-# ==================================================
 WSGI_APPLICATION = "ad_click_fraud_classification.wsgi.application"
 ASGI_APPLICATION = "ad_click_fraud_classification.asgi.application"
 
 
-# ==================================================
-# DATABASE (SQLite – SAFE FOR FREE RENDER)
-# ==================================================
 # DATABASE
 # ==================================================
 # Render provides DATABASE_URL. If present, use it (Postgres).
@@ -118,10 +94,6 @@ if "RENDER" in os.environ:
     DATABASES["default"].update(db_from_env)
 
 
-
-# ==================================================
-# PASSWORD VALIDATION
-# ==================================================
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -138,18 +110,12 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# ==================================================
-# INTERNATIONALIZATION
-# ==================================================
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
 
-# ==================================================
-# STATIC FILES (CSS / JS FIXED)
-# ==================================================
 STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
@@ -163,32 +129,21 @@ STATICFILES_STORAGE = (
 )
 
 
-# ==================================================
-# MEDIA FILES (CSV UPLOADS)
-# ==================================================
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
-# ==================================================
-# DEFAULT PRIMARY KEY
-# ==================================================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# ==================================================
-# FILE UPLOAD LIMITS
-# ==================================================
 DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50MB
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
-# ==================================================
-# AUTH FLOW
-# ==================================================
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/login/"
+
 
 
 
