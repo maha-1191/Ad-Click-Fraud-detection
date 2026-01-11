@@ -1,4 +1,3 @@
-
 import joblib
 import torch
 from ml_engine.models.cnn_rnn import CNNRNNModel
@@ -14,9 +13,18 @@ class InferenceModelRegistry:
 
         model = joblib.load(model_path)
 
-        # REQUIRED for backward compatibility with old-trained models
+        # ---- backward compatibility patches ----
         if not hasattr(model, "use_label_encoder"):
-            setattr(model, "use_label_encoder", False)
+            model.use_label_encoder = False
+
+        if not hasattr(model, "gpu_id"):
+            model.gpu_id = -1
+
+        if not hasattr(model, "predictor"):
+            model.predictor = "cpu_predictor"
+
+        if not hasattr(model, "tree_method"):
+            model.tree_method = "hist"
 
         return model
 
@@ -31,6 +39,7 @@ class InferenceModelRegistry:
         model.load_state_dict(state_dict)
         model.eval()
         return model
+
 
 
 
