@@ -42,7 +42,6 @@ class FraudPredictor:
         self.xgb_model = InferenceModelRegistry.load_xgb(self.config.MODEL_DIR)
 
     def _load_deep_model(self, input_dim: int):
-        logger.info("Loading CNN–RNN model (inference)")
         self.deep_model = InferenceModelRegistry.load_deep(
             self.config.MODEL_DIR,
             input_dim
@@ -52,17 +51,14 @@ class FraudPredictor:
     def _normalize_ip(ip_value):
         if pd.isna(ip_value):
             return None
-
         if isinstance(ip_value, str):
             return ip_value.strip()
-
         try:
             ip_int = int(ip_value)
             if 0 < ip_int <= 0xFFFFFFFF:
                 return socket.inet_ntoa(struct.pack("!I", ip_int))
         except Exception:
             pass
-
         return str(ip_value)
 
     def predict(self, df: pd.DataFrame) -> Dict[str, Any]:
@@ -83,9 +79,6 @@ class FraudPredictor:
             sequence_length=SEQUENCE_LENGTH
         )
 
-        if len(X_seq) == 0:
-            raise ValueError("No sequences generated")
-
         if self.deep_model is None:
             self._load_deep_model(X_seq.shape[2])
 
@@ -97,7 +90,8 @@ class FraudPredictor:
 
         embeddings = np.vstack(embeddings)
 
-        probs = self.xgb_model.model.predict_proba(embeddings)[:, 1]
+        dmatrix = xgb.DMatrix(embeddings)
+        probs = self.xgb_model.model.get_booster().predict(dmatrix)
 
         total_sequences = len(probs)
         fraud_sequences = int((probs >= INFERENCE_THRESHOLD).sum())
@@ -110,20 +104,15 @@ class FraudPredictor:
         fraud_clicks = len(fraud_click_ids)
         legit_clicks = total_clicks - fraud_clicks
 
-        ip_stats = defaultdict(lambda: {
-            "fraud_clicks": set(),
-            "risk_sum": 0.0
-        })
+        ip_stats = defaultdict(lambda: {"fraud_clicks": set(), "risk_sum": 0.0})
 
         for prob, click_ids in zip(probs, click_index_map):
             if prob < INFERENCE_THRESHOLD:
                 continue
-
             for idx in click_ids:
                 ip = self._normalize_ip(df.iloc[idx]["ip"])
                 if not ip:
                     continue
-
                 ip_stats[ip]["fraud_clicks"].add(idx)
                 ip_stats[ip]["risk_sum"] += prob
 
@@ -132,16 +121,13 @@ class FraudPredictor:
             count = len(v["fraud_clicks"])
             if count == 0:
                 continue
-
             avg_risk = v["risk_sum"] / count
-
             if avg_risk >= HIGH_RISK_THRESHOLD:
                 level, action = "HIGH", "BLOCK"
             elif avg_risk >= MEDIUM_RISK_THRESHOLD:
                 level, action = "MEDIUM", "THROTTLE"
             else:
                 continue
-
             ip_risk.append({
                 "ip": ip,
                 "avg_risk_score": round(avg_risk, 3),
@@ -153,7 +139,6 @@ class FraudPredictor:
         ip_risk.sort(key=lambda x: x["avg_risk_score"], reverse=True)
 
         time_stats = {h: {"total_clicks": 0, "fraud_clicks": 0} for h in range(24)}
-
         for idx, row in df.iterrows():
             h = int(row["click_hour"])
             time_stats[h]["total_clicks"] += 1
@@ -161,12 +146,7 @@ class FraudPredictor:
                 time_stats[h]["fraud_clicks"] += 1
 
         time_trends = [
-            {
-                "hour": h,
-                "total_clicks": time_stats[h]["total_clicks"],
-                "fraud_clicks": time_stats[h]["fraud_clicks"],
-            }
-            for h in range(24)
+            {"hour": h, **time_stats[h]} for h in range(24)
         ]
 
         sample_size = min(SHAP_SAMPLE_SIZE, embeddings.shape[0])
@@ -181,9 +161,8 @@ class FraudPredictor:
                 "legit_clicks": legit_clicks,
                 "total_sequences": total_sequences,
                 "fraud_sequences": fraud_sequences,
-                "fraud_ratio": round(
-                    fraud_clicks / total_clicks, 4
-                ) if total_clicks > 0 else 0.0,
+                "fraud_ratio": round(fraud_clicks / total_clicks, 4)
+                if total_clicks > 0 else 0.0,
                 "inference_threshold": INFERENCE_THRESHOLD,
             },
             "ip_risk": ip_risk[:50],
@@ -196,6 +175,7 @@ class FraudPredictor:
             },
             "shap_summary": shap_summary,
         }
+
 
 
 
