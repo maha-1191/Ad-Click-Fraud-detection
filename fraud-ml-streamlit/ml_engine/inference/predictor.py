@@ -22,8 +22,8 @@ SEQUENCE_LENGTH = 10
 BATCH_SIZE = 512
 
 INFERENCE_THRESHOLD = 0.03
-HIGH_RISK_THRESHOLD = 0.03
-MEDIUM_RISK_THRESHOLD = 0.05
+HIGH_RISK_THRESHOLD = 0.05
+MEDIUM_RISK_THRESHOLD = 0.03
 
 ASSUMED_CPC_INR = 5.0
 SHAP_SAMPLE_SIZE = 50
@@ -40,8 +40,6 @@ class FraudPredictor:
         if not (self.config.MODEL_DIR / "xgb.joblib").exists():
             raise FileNotFoundError("xgb.joblib not found in artifacts/models")
 
-
-        logger.info("Loading XGBoost model (inference)")
         self.xgb_model = InferenceModelRegistry.load_xgb(self.config.MODEL_DIR)
 
     def _load_deep_model(self, input_dim: int):
@@ -93,8 +91,6 @@ class FraudPredictor:
 
         embeddings = np.vstack(embeddings)
         probs = self.xgb_model.predict_proba(embeddings)[:, 1]
-       
-
 
         total_sequences = len(probs)
         fraud_sequences = int((probs >= INFERENCE_THRESHOLD).sum())
@@ -148,13 +144,11 @@ class FraudPredictor:
             if idx in fraud_click_ids:
                 time_stats[h]["fraud_clicks"] += 1
 
-        time_trends = [
-            {"hour": h, **time_stats[h]} for h in range(24)
-        ]
+        time_trends = [{"hour": h, **time_stats[h]} for h in range(24)]
 
         sample_size = min(SHAP_SAMPLE_SIZE, embeddings.shape[0])
         shap_summary = SHAPExplainer(
-            self.xgb_model.model
+            self.xgb_model
         ).explain(embeddings[:sample_size])
 
         return {
@@ -178,6 +172,7 @@ class FraudPredictor:
             },
             "shap_summary": shap_summary,
         }
+
 
 
 
