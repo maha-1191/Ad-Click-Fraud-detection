@@ -27,23 +27,40 @@ def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "home.html")
+
 @require_http_methods(["GET", "POST"])
 def login_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
 
     if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
         user = authenticate(
             request,
-            username=request.POST.get("username"),
-            password=request.POST.get("password"),
+            username=username,
+            password=password,
         )
+
         if user:
             login(request, user)
             return redirect("dashboard")
-        messages.error(request, "Invalid credentials")
+
+        # 👇 THIS IS THE NEW LOGIC
+        if not User.objects.filter(username=username).exists():
+            messages.error(
+                request,
+                "No account exists with this username. Please create an account."
+            )
+        else:
+            messages.error(
+                request,
+                "Incorrect password. Please try again."
+            )
 
     return render(request, "login.html")
+
 
 
 @require_http_methods(["GET", "POST"])
