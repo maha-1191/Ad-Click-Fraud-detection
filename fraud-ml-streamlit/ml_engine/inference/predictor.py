@@ -6,7 +6,6 @@ import struct
 import pandas as pd
 import numpy as np
 import torch
-import xgboost as xgb
 
 from ml_engine.logger import get_logger
 from ml_engine.data_pipeline.data_validation import DataValidator
