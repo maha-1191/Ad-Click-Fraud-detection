@@ -89,7 +89,9 @@ class FraudPredictor:
                 embeddings.append(self.deep_model(batch).numpy())
 
         embeddings = np.vstack(embeddings)
-        probs = self.xgb_model.model.predict_proba(embeddings)[:, 1]
+        dmatrix = xgb.DMatrix(embeddings)
+        probs = self.xgb_model.model.get_booster().predict(dmatrix)
+
 
 
         total_sequences = len(probs)
