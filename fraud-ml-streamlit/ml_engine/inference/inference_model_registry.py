@@ -1,3 +1,4 @@
+
 import joblib
 import torch
 from ml_engine.models.cnn_rnn import CNNRNNModel
@@ -12,6 +13,11 @@ class InferenceModelRegistry:
             raise FileNotFoundError(f"xgb.joblib not found at {model_path}")
 
         model = joblib.load(model_path)
+
+        # REQUIRED for backward compatibility with old-trained models
+        if not hasattr(model, "use_label_encoder"):
+            setattr(model, "use_label_encoder", False)
+
         return model
 
     @staticmethod
