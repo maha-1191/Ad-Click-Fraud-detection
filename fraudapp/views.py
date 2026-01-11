@@ -1,5 +1,5 @@
-import csv
 import pandas as pd
+import csv
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -15,24 +15,18 @@ from fraudapp.ml_engine.logger import get_logger
 from .models import UploadedDataset, PredictionResult
 
 logger = get_logger(__name__)
-
 _PREDICTOR = None
-
 
 def get_predictor():
     global _PREDICTOR
     if _PREDICTOR is None:
-        logger.info("Initializing local FraudPredictor")
+        logger.debug("Using UPDATED FraudPredictor")
         _PREDICTOR = FraudPredictor()
     return _PREDICTOR
-
-
 def home(request):
     if request.user.is_authenticated:
         return redirect("dashboard")
     return render(request, "home.html")
-
-
 @require_http_methods(["GET", "POST"])
 def login_view(request):
     if request.user.is_authenticated:
@@ -78,32 +72,43 @@ def register_view(request):
 def logout_view(request):
     logout(request)
     return redirect("login")
-
-
 @login_required
 def dashboard(request):
-    dataset = (
-        UploadedDataset.objects
-        .filter(uploaded_by=request.user, status="PROCESSED")
-        .order_by("-created_at")
-        .first()
-    )
+    dataset_id = request.GET.get("dataset_id")
 
-    result = (
-        PredictionResult.objects.filter(dataset=dataset).first()
-        if dataset else None
-    )
+    dataset = None
+    result = None
+
+    if dataset_id:
+        dataset = get_object_or_404(
+            UploadedDataset,
+            id=dataset_id,
+            uploaded_by=request.user,
+            status="PROCESSED"
+        )
+    else:
+        dataset = (
+            UploadedDataset.objects
+            .filter(uploaded_by=request.user, status="PROCESSED")
+            .order_by("-created_at")
+            .first()
+        )
+
+    if dataset:
+        result = PredictionResult.objects.filter(
+            dataset=dataset
+        ).first()
 
     return render(
         request,
+        "dashboard.html",
         {
             "dataset": dataset,
             "result": result,
-        },
-        "dashboard.html",
+        }
     )
 
-
+   
 @login_required
 def profile_view(request):
     datasets = (
@@ -114,15 +119,13 @@ def profile_view(request):
 
     return render(
         request,
+        "profile.html",
         {
             "user_obj": request.user,
             "datasets": datasets,
             "total_datasets": datasets.count(),
-        },
-        "profile.html",
+        }
     )
-
-
 @login_required
 def upload_dataset(request):
     if request.method == "POST":
@@ -130,7 +133,7 @@ def upload_dataset(request):
             file = request.FILES.get("dataset")
 
             if not file or not file.name.endswith(".csv"):
-                messages.error(request, "Please upload a valid CSV file.")
+                messages.error(request, "Please upload a CSV file.")
                 return render(request, "upload.html")
 
             dataset = UploadedDataset.objects.create(
@@ -144,7 +147,7 @@ def upload_dataset(request):
             if df.empty:
                 dataset.status = "FAILED"
                 dataset.save()
-                messages.error(request, "Uploaded CSV is empty.")
+                messages.error(request, "CSV is empty.")
                 return render(request, "upload.html")
 
             dataset.total_rows = len(df)
@@ -152,11 +155,11 @@ def upload_dataset(request):
             dataset.save()
 
             messages.success(request, "Dataset uploaded successfully.")
-            return redirect("dashboard")
+            return render(request, "upload.html", {"dataset": dataset})
 
         except Exception:
-            logger.exception("Dataset upload failed")
-            messages.error(request, "Dataset upload failed.")
+            logger.exception("Upload failed")
+            messages.error(request, "Upload failed.")
             return render(request, "upload.html")
 
     return render(request, "upload.html")
@@ -172,7 +175,6 @@ def run_detection(request, dataset_id):
 
     try:
         df = pd.read_csv(dataset.file.path)
-
         predictor = get_predictor()
         output = predictor.predict(df)
 
@@ -180,20 +182,25 @@ def run_detection(request, dataset_id):
 
         PredictionResult.objects.create(
             dataset=dataset,
+
             total_clicks=summary["total_clicks"],
             fraud_clicks=summary["fraud_clicks"],
             legit_clicks=summary["legit_clicks"],
-            metrics=summary,
+
+            metrics={
+                "summary": summary,
+                "business_impact": output.get("business_impact", {}),
+                "time_trends": output.get("time_trends", []),
+                "shap_summary": output.get("shap_summary", []),
+            },
+
             ip_risk=output.get("ip_risk", []),
-            business_impact=output.get("business_impact", {}),
-            time_trends=output.get("time_trends", []),
-            shap_summary=output.get("shap_summary", []),
         )
 
         dataset.status = "PROCESSED"
         dataset.save()
 
-        messages.success(request, "Fraud detection completed successfully.")
+        messages.success(request, "Fraud detection completed.")
         return redirect("dashboard")
 
     except Exception:
@@ -231,7 +238,6 @@ def export_ip_blacklist(request, dataset_id):
 
     return response
 
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_predict_fraud(request):
@@ -241,11 +247,12 @@ def api_predict_fraud(request):
         output = predictor.predict(df)
         return JsonResponse({"status": "success", "data": output})
     except Exception as e:
-        logger.exception("API prediction failed")
+        logger.exception("API inference failed")
         return JsonResponse(
             {"status": "error", "message": str(e)},
             status=500
         )
+
 
 
 

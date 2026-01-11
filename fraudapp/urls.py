@@ -25,7 +25,6 @@ urlpatterns = [
         name="export_ip_blacklist"
     ),
 
-    path("predict", views.predict_api, name="predict_api"),
 
 ]
 
