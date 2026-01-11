@@ -34,8 +34,12 @@ class FraudPredictor:
         self.config = InferenceConfig()
         self.deep_model = None
 
-        assert (self.config.MODEL_DIR / "deep_model.pt").exists()
-        assert (self.config.MODEL_DIR / "xgb.joblib").exists()
+        if not (self.config.MODEL_DIR / "deep_model.pt").exists():
+            raise FileNotFoundError("deep_model.pt not found in artifacts/models")
+
+        if not (self.config.MODEL_DIR / "xgb.joblib").exists():
+            raise FileNotFoundError("xgb.joblib not found in artifacts/models")
+
 
         logger.info("Loading XGBoost model (inference)")
         self.xgb_model = InferenceModelRegistry.load_xgb(self.config.MODEL_DIR)
@@ -88,7 +92,7 @@ class FraudPredictor:
                 embeddings.append(self.deep_model(batch).numpy())
 
         embeddings = np.vstack(embeddings)
-        probs = self.xgb_model.model.predict_proba(embeddings)[:, 1]
+        probs = self.xgb_model.predict_proba(embeddings)[:, 1]
        
 
 

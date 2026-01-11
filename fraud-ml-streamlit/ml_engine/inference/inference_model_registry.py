@@ -7,8 +7,12 @@ class InferenceModelRegistry:
 
     @staticmethod
     def load_xgb(model_dir):
-        # Load sklearn XGBClassifier (same as Django)
-        model = joblib.load(model_dir / "xgb.joblib")
+        model_path = model_dir / "xgb.joblib"
+
+        if not model_path.exists():
+            raise FileNotFoundError(f"XGB model not found at {model_path}")
+
+        model = joblib.load(model_path)
 
         # sklearn / xgboost compatibility
         if hasattr(model, "use_label_encoder"):
@@ -18,15 +22,19 @@ class InferenceModelRegistry:
 
     @staticmethod
     def load_deep(model_dir, input_dim):
+        model_path = model_dir / "deep_model.pt"
+
+        if not model_path.exists():
+            raise FileNotFoundError(f"Deep model not found at {model_path}")
+
         model = CNNRNNModel(input_dim)
-        model.load_state_dict(
-            torch.load(
-                model_dir / "deep_model.pt",
-                map_location="cpu"
-            )
-        )
+
+        state_dict = torch.load(model_path, map_location="cpu")
+        model.load_state_dict(state_dict)
+
         model.eval()
         return model
+
 
 
 

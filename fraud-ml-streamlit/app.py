@@ -14,30 +14,24 @@ from ml_engine.inference.predictor import FraudPredictor
 query_params = st.query_params
 
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def load_predictor():
     return FraudPredictor()
 
-
 predictor = load_predictor()
 
-
-# ---------- API MODE ----------
 if "api" in query_params:
     uploaded_file = st.file_uploader(
-        label="",
+        label="Upload CSV",
         type=["csv"]
     )
 
-    if uploaded_file:
+    if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
         result = predictor.predict(df)
         st.json(result)
 
     st.stop()
-
-
-# ---------- UI MODE ----------
 st.title("Ad Click Fraud Detection – ML Service")
 st.caption("Inference-only CNN–RNN + XGBoost service")
 
@@ -46,7 +40,7 @@ uploaded_file = st.file_uploader(
     type=["csv"]
 )
 
-if uploaded_file:
+if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
 
     st.success(
@@ -64,7 +58,10 @@ if uploaded_file:
         st.json(results["summary"])
 
         st.subheader("IP Risk")
-        st.dataframe(pd.DataFrame(results["ip_risk"]))
+        if results["ip_risk"]:
+            st.dataframe(pd.DataFrame(results["ip_risk"]))
+        else:
+            st.info("No high-risk IPs detected")
 
         st.subheader("Hourly Trends")
         st.dataframe(pd.DataFrame(results["time_trends"]))
@@ -74,6 +71,7 @@ if uploaded_file:
 
         st.subheader("SHAP Explainability")
         st.dataframe(pd.DataFrame(results["shap_summary"]))
+
 
 
 
