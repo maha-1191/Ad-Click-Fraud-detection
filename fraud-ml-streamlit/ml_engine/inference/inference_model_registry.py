@@ -4,10 +4,13 @@ from ml_engine.models.cnn_rnn import CNNRNNModel
 
 
 class InferenceModelRegistry:
+
     @staticmethod
     def load_xgb(model_dir):
+        # MUST load sklearn XGBClassifier
         model = joblib.load(model_dir / "xgb.joblib")
 
+        # Django compatibility
         if hasattr(model, "use_label_encoder"):
             model.use_label_encoder = False
 
@@ -24,4 +27,5 @@ class InferenceModelRegistry:
         )
         model.eval()
         return model
+
 
