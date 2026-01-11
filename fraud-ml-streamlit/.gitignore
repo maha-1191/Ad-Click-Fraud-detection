@@ -19,3 +19,4 @@ __pycache__/
 
 # Trained ML models (Streamlit/Django)
 ml_engine/artifacts/
+
