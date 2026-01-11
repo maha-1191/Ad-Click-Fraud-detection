@@ -1,19 +1,23 @@
 import csv
-import pandas as pd
 import os
 import requests
+import pandas as pd
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
-from django.views.decorators.csrf import csrf_exempt
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.contrib.auth.models import User
 
 from .models import UploadedDataset, PredictionResult
-from .ml_engine.inference.predictor import FraudPredictor
+
+
+# =====================================================
+# STREAMLIT ML API URL (FINAL)
+# =====================================================
+ML_API_URL = "https://ad-click-fraud-detection-8df3vwi47neaz53utto84g.streamlit.app/?api=1"
 
 
 # =====================================================
@@ -88,18 +92,15 @@ def dashboard(request):
         .first()
     )
 
-    result = None
-    if dataset:
-        result = PredictionResult.objects.filter(dataset=dataset).first()
-
-    return render(
-        request,
-        "dashboard.html",
-        {
-            "dataset": dataset,
-            "result": result,
-        }
+    result = (
+        PredictionResult.objects.filter(dataset=dataset).first()
+        if dataset else None
     )
+
+    return render(request, "dashboard.html", {
+        "dataset": dataset,
+        "result": result,
+    })
 
 
 # =====================================================
@@ -108,41 +109,32 @@ def dashboard(request):
 @login_required
 def upload_dataset(request):
     if request.method == "POST":
-        try:
-            file = request.FILES.get("dataset")
+        file = request.FILES.get("dataset")
 
-            if not file or not file.name.endswith(".csv"):
-                messages.error(request, "Upload a valid CSV file.")
-                return render(request, "upload.html")
-
-            dataset = UploadedDataset.objects.create(
-                original_filename=file.name,
-                file=file,
-                uploaded_by=request.user,
-                status="UPLOADED",
-            )
-
-            df = pd.read_csv(dataset.file.path)
-            dataset.total_rows = len(df)
-            dataset.total_columns = len(df.columns)
-            dataset.save()
-
-            messages.success(
-                request,
-                "Dataset uploaded successfully. Click 'Run Detection'."
-            )
-
-            return render(request, "upload.html", {"dataset": dataset})
-
-        except Exception as e:
-            messages.error(request, f"Upload failed: {e}")
+        if not file or not file.name.endswith(".csv"):
+            messages.error(request, "Upload a valid CSV file.")
             return render(request, "upload.html")
+
+        dataset = UploadedDataset.objects.create(
+            original_filename=file.name,
+            file=file,
+            uploaded_by=request.user,
+            status="UPLOADED",
+        )
+
+        df = pd.read_csv(dataset.file.path)
+        dataset.total_rows = len(df)
+        dataset.total_columns = len(df.columns)
+        dataset.save()
+
+        messages.success(request, "Dataset uploaded successfully.")
+        return redirect("dashboard")
 
     return render(request, "upload.html")
 
 
 # =====================================================
-# RUN FRAUD DETECTION (FASTAPI ON RENDER)
+# RUN FRAUD DETECTION (STREAMLIT HTTP CALL)
 # =====================================================
 @login_required
 def run_detection(request, dataset_id):
@@ -152,17 +144,13 @@ def run_detection(request, dataset_id):
         uploaded_by=request.user
     )
 
-    ML_API_URL = os.getenv(
-        "ML_API_URL",
-        "https://fraud-ml-api.onrender.com/predict"
-    ).strip()
-
     try:
         with open(dataset.file.path, "rb") as f:
             response = requests.post(
                 ML_API_URL,
                 files={
-                    "file": (
+                    # MUST be "api" (matches Streamlit uploader key)
+                    "api": (
                         dataset.original_filename,
                         f,
                         "text/csv"
@@ -178,11 +166,9 @@ def run_detection(request, dataset_id):
 
         PredictionResult.objects.create(
             dataset=dataset,
-
             total_clicks=summary.get("total_clicks", 0),
             fraud_clicks=summary.get("fraud_clicks", 0),
             legit_clicks=summary.get("legit_clicks", 0),
-
             metrics=summary,
             ip_risk=data.get("ip_risk", []),
             business_impact=data.get("business_impact", {}),
@@ -234,49 +220,6 @@ def export_ip_blacklist(request, dataset_id):
     return response
 
 
-# =====================================================
-# PROFILE
-# =====================================================
-@login_required
-def profile_view(request):
-    datasets = (
-        UploadedDataset.objects
-        .filter(uploaded_by=request.user)
-        .order_by("-created_at")
-    )
 
-    return render(
-        request,
-        "profile.html",
-        {
-            "user_obj": request.user,
-            "datasets": datasets,
-            "total_datasets": datasets.count(),
-        }
-    )
-
-
-# =====================================================
-# LOCAL PREDICT API (OPTIONAL)
-# =====================================================
-@csrf_exempt
-def predict_api(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
-
-    if "file" not in request.FILES:
-        return JsonResponse({"error": "No file uploaded"}, status=400)
-
-    try:
-        file = request.FILES["file"]
-        df = pd.read_csv(file)
-
-        predictor = FraudPredictor()
-        result = predictor.predict(df)
-
-        return JsonResponse(result)
-
-    except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
 
 

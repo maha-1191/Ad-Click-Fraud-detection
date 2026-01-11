@@ -12,9 +12,7 @@ shap==0.44.1
 tqdm==4.66.1
 python-dotenv==1.0.1
 
-fastapi
-uvicorn
-python-multipart
+
 
 
 
