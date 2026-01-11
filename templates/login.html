@@ -27,6 +27,15 @@
         Ad Click Fraud Detection System
     </div>
 
+    <!-- MESSAGE BLOCK (IMPORTANT) -->
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} text-center">
+            {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
     <form method="post">
         {% csrf_token %}
 
@@ -70,6 +79,7 @@
 
 </body>
 </html>
+
 
 
 

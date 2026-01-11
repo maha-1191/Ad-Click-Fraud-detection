@@ -200,7 +200,8 @@ def run_detection(request, dataset_id):
         dataset.status = "PROCESSED"
         dataset.save()
 
-        messages.success(request, "Fraud detection completed.")
+        messages.success(request, "Fraud detection completed.",
+                         extra_tags="dashboard")
         return redirect("dashboard")
 
     except Exception:
